@@ -1,8 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:horas_trabajo/data/models/workplace.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
-import 'package:timezone/timezone.dart' as tz;
 
 /// Payloads usados para que al tocar la notificación se pueda marcar.
 class GeofenceAction {
@@ -28,13 +26,11 @@ class NotificationsService {
   static FlutterLocalNotificationsPlugin get plugin =>
       _plugin ??= FlutterLocalNotificationsPlugin();
 
-  /// Inicializa la zona horaria (necesaria antes de mostrar notificaciones).
+  /// Inicializa la zona horaria (solo datos; no se programan notificaciones).
   static Future<void> initZonaHoraria() async {
     tzdata.initializeTimeZones();
-    try {
-      final nombre = await FlutterTimezone.getLocalTimezone();
-      tz.setLocalLocation(tz.getLocation(nombre));
-    } catch (_) {/* zona por defecto */}
+    // Solo usamos notificaciones inmediatas (show), no programadas,
+    // así que no requerimos fijar la zona local del dispositivo.
   }
 
   /// Inicializa el plugin (una vez) y registra el manejador de toques.
