@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:horas_trabajo/core/utils/formatters.dart';
 import 'package:horas_trabajo/data/models/work_session.dart';
+import 'package:horas_trabajo/data/models/workplace.dart';
 import 'package:horas_trabajo/state/app_state.dart';
 import 'package:provider/provider.dart';
 
@@ -21,7 +22,7 @@ class _HomeTabState extends State<HomeTab> {
   void initState() {
     super.initState();
     _tick = Timer.periodic(const Duration(seconds: 1), (_) {
-      setState(() => _ahora = DateTime.now());
+      if (mounted) setState(() => _ahora = DateTime.now());
     });
   }
 
@@ -45,7 +46,8 @@ class _HomeTabState extends State<HomeTab> {
 
     final hoyMinutos = app.sesiones.fold<Duration>(
       Duration.zero,
-      (acc, s) => acc + (s.enProgreso ? _ahora.difference(s.inicio) : s.duracion),
+      (acc, s) =>
+          acc + (s.enProgreso ? _ahora.difference(s.inicio) : s.duracion),
     );
 
     return Scaffold(
@@ -70,21 +72,29 @@ class _HomeTabState extends State<HomeTab> {
           children: [
             if (!app.perfilCompleto) const _AvisoPerfil(),
             const SizedBox(height: 16),
-            _TarjetaReloj(
+            _TarjetaMarcador(
               activa: activa,
-              hora: _ahora,
+              ahora: _ahora,
               duraActiva: activa == null
                   ? Duration.zero
                   : _ahora.difference(activa.inicio),
               procesando: app.procesando,
-              onAccion: () => _accionMarcar(context, app),
+              onEntrada: () => _pulsarEntrada(app),
+              onSalida: () => _pulsarSalida(app),
+            ),
+            const SizedBox(height: 16),
+            _TarjetaTrabajo(
+              app: app,
+              activa: activa,
+              onToggleMonitoreo: () => _alternarMonitor(app),
             ),
             const SizedBox(height: 16),
             _TarjetaResumenDia(
               horas: hoyMinutos,
               totalSesiones: app.sesiones.where(_enHoy).length,
-              salarioHora:
-                  app.perfil.salarioMensual > 0 ? app.motor.valorHoraOrdinaria : null,
+              salarioHora: app.perfil.salarioMensual > 0
+                  ? app.motor.valorHoraOrdinaria
+                  : null,
             ),
           ],
         ),
@@ -92,32 +102,117 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  Future<void> _accionMarcar(BuildContext context, AppState app) async {
-    final snack = ScaffoldMessenger.of(context);
-    if (app.activa != null) {
-      await app.registrarSalida();
-      snack.showSnackBar(const SnackBar(content: Text('Salida registrada ✅')));
-    } else {
-      await app.registrarEntrada();
-      snack.showSnackBar(const SnackBar(content: Text('Entrada registrada ⏱️')));
+  // ----- Flujo de marcado -----
+
+  Future<void> _pulsarEntrada(AppState app) async {
+    if (app.activa != null) return;
+    final messenger = ScaffoldMessenger.of(context);
+
+    // Pide permiso de GPS y captura la ubicación.
+    final gps = await app.pedirUbicacion();
+
+    // Primera vez: ofrecer guardar como lugar de trabajo.
+    if (gps != null && app.workplace == null && mounted) {
+      final guardar = await _confirmarLugarDeTrabajo(context, gps);
+      if (guardar == true) {
+        await app.guardarWorkplace(Workplace(
+          id: DateTime.now().millisecondsSinceEpoch,
+          latitud: gps[0],
+          longitud: gps[1],
+          nombre: 'Mi lugar de trabajo',
+          creadoEn: DateTime.now(),
+        ));
+        if (mounted) {
+          messenger.showSnackBar(
+            const SnackBar(content: Text('Lugar de trabajo guardado ✅')),
+          );
+        }
+      }
     }
+
+    await app.registrarEntrada(ubicacion: gps);
+    if (mounted) {
+      messenger.showSnackBar(const SnackBar(content: Text('Entrada registrada ⏱️')));
+    }
+  }
+
+  Future<void> _pulsarSalida(AppState app) async {
+    await app.registrarSalida();
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Salida registrada ✅')));
+    }
+  }
+
+  Future<void> _alternarMonitor(AppState app) async {
+    if (app.monitoreando) {
+      await app.desactivarMonitor();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Vigilancia desactivada')),
+        );
+      }
+      return;
+    }
+    final ok = await app.activarMonitor();
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    if (ok) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Vigilando llegada y salida 🛰️')),
+      );
+    } else {
+      messenger.showSnackBar(
+        const SnackBar(
+            content: Text('No se pudo activar: permite el acceso a la ubicación.')),
+      );
+    }
+  }
+
+  Future<bool?> _confirmarLugarDeTrabajo(
+    BuildContext context,
+    List<double> gps,
+  ) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(Icons.work_outline, size: 34),
+        title: const Text('¿Guardar lugar de trabajo?'),
+        content: const Text(
+          '¿Quieres guardar esta ubicación como tu lugar de trabajo '
+          'para recibir avisos al llegar y al salir?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('No, gracias'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sí, guardar'),
+          ),
+        ],
+      ),
+    );
   }
 }
 
-class _TarjetaReloj extends StatelessWidget {
-  const _TarjetaReloj({
+class _TarjetaMarcador extends StatelessWidget {
+  const _TarjetaMarcador({
     required this.activa,
-    required this.hora,
+    required this.ahora,
     required this.duraActiva,
     required this.procesando,
-    required this.onAccion,
+    required this.onEntrada,
+    required this.onSalida,
   });
 
   final WorkSession? activa;
-  final DateTime hora;
+  final DateTime ahora;
   final Duration duraActiva;
   final bool procesando;
-  final VoidCallback onAccion;
+  final VoidCallback onEntrada;
+  final VoidCallback onSalida;
 
   @override
   Widget build(BuildContext context) {
@@ -125,48 +220,156 @@ class _TarjetaReloj extends StatelessWidget {
     final enCurso = activa != null;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(22),
         child: Column(
           children: [
             Text(
-              Fmt.horaCorta(hora),
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
+              Fmt.horaCorta(ahora),
+              style: Theme.of(context).textTheme.displayLarge?.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: scheme.primary,
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
               enCurso ? 'Sesión en curso' : 'Fuera de la jornada',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: enCurso ? scheme.primary : scheme.onSurfaceVariant,
                   ),
             ),
-            const SizedBox(height: 12),
-            Text(
-              enCurso ? Fmt.duracionExtendida(duraActiva) : 'Pulsa para marcar tu entrada',
-              style: enCurso
-                  ? Theme.of(context).textTheme.headlineSmall?.copyWith(
+            const SizedBox(height: 10),
+            if (enCurso)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                decoration: BoxDecoration(
+                  color: scheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Text(
+                  Fmt.duracionExtendida(duraActiva),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                         fontFeatures: const [FontFeature.tabularFigures()],
-                      )
-                  : Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 24),
+                      ),
+                ),
+              ),
+            const SizedBox(height: 22),
             SizedBox(
               width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: procesando ? null : onAccion,
-                style: FilledButton.styleFrom(
-                  backgroundColor: enCurso ? scheme.tertiaryContainer : scheme.primary,
-                  foregroundColor: enCurso ? scheme.onTertiaryContainer : scheme.onPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                icon: Icon(enCurso ? Icons.stop_circle_outlined : Icons.play_arrow),
-                label: Text(enCurso ? 'Registrar salida' : 'Registrar entrada',
-                    style: const TextStyle(fontSize: 18)),
+              child: enCurso
+                  ? FilledButton.icon(
+                      onPressed: procesando ? null : onSalida,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: scheme.errorContainer,
+                        foregroundColor: scheme.onErrorContainer,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                      ),
+                      icon: const Icon(Icons.logout, size: 26),
+                      label: const Text('Marcar salida', style: TextStyle(fontSize: 20)),
+                    )
+                  : FilledButton.icon(
+                      onPressed: procesando ? null : onEntrada,
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                      ),
+                      icon: const Icon(Icons.login, size: 26),
+                      label: const Text('Marcar entrada', style: TextStyle(fontSize: 20)),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TarjetaTrabajo extends StatelessWidget {
+  const _TarjetaTrabajo({
+    required this.app,
+    required this.activa,
+    required this.onToggleMonitoreo,
+  });
+
+  final AppState app;
+  final WorkSession? activa;
+  final VoidCallback onToggleMonitoreo;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final wp = app.workplace;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        child: Column(
+          children: [
+            SwitchListTile(
+              value: app.monitoreando,
+              onChanged: (_) => onToggleMonitoreo(),
+              title: const Text('Vigilar llegada y salida'),
+              subtitle: Text(
+                app.monitoreando
+                    ? 'Avisos al llegar/salir del trabajo'
+                    : 'Notificaciones de geocerca',
+              ),
+              secondary: Icon(
+                app.monitoreando ? Icons.gps_fixed : Icons.gps_not_fixed,
+                color: app.monitoreando ? scheme.primary : scheme.outline,
               ),
             ),
+            if (wp != null)
+              ListTile(
+                leading: Icon(
+                  app.dentro ? Icons.business : Icons.north_west,
+                  color: app.dentro ? scheme.primary : scheme.tertiary,
+                ),
+                title: Text(wp.nombre),
+                subtitle: Text(
+                  app.monitoreando
+                      ? (app.dentro
+                          ? 'Estás dentro del área de trabajo'
+                          : 'Fuera del área de trabajo')
+                      : 'Radio ${wp.radioMetros.round()} m',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () async {
+                  final quitar = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Lugar de trabajo'),
+                      content: Text(
+                        '📍 ${wp.latitud.toStringAsFixed(5)}, '
+                        '${wp.longitud.toStringAsFixed(5)}\n'
+                        'Radio: ${wp.radioMetros.round()} m',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Cerrar'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text('Eliminar'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (quitar == true && context.mounted) {
+                    await app.quitarWorkplace();
+                  }
+                },
+              )
+            else
+              const ListTile(
+                leading: Icon(Icons.add_location_alt_outlined),
+                title: Text('Sin lugar de trabajo'),
+                subtitle: Text(
+                    'Al marcar tu primera entrada podrás guardar la ubicación'),
+                onTap: null,
+              ),
           ],
         ),
       ),
@@ -195,10 +398,9 @@ class _TarjetaResumenDia extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Resumen de hoy',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600)),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    )),
             const SizedBox(height: 16),
             Row(
               children: [

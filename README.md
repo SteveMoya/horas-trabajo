@@ -7,8 +7,13 @@ aplicando las reglas del **Código de Trabajo de República Dominicana (Ley 16-9
 
 ## ✨ Funcionalidades
 
-- **Marcado de entrada/salida** con registro de ubicación (GPS opcional).
+- **Marcado de entrada/salida** con registro de ubicación (GPS opcional) y hora actual.
 - **Sesión en curso** con reloj en vivo.
+- **Lugar de trabajo (geocerca):** al marcar tu primera entrada se pide permiso de GPS
+  y puedes guardar la ubicación como tu lugar de trabajo.
+- **Vigilancia de llegada/salida:** al activar el toggle, la app detecta cuando entras
+  o sales del área del trabajo y te envía una notificación **"¿Marcar la entrada/salida?"**
+  (con acción rápida "Marcar ahora").
 - **Historial** de jornadas, con nota y marcas de *día feriado* / *descanso semanal*.
 - **Cálculo salarial RD**: desglose por concepto (ordinarias, extras, exceso,
   nocturnas, feriadas).

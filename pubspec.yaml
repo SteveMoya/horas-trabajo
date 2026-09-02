@@ -1,7 +1,7 @@
 name: horas_trabajo
 description: "Registro de Horas Trabajadas — app local con cálculo salarial según Código de Trabajo RD (Ley 16-92). Material 3, 100% local."
 publish_to: "none"
-version: 1.0.0+1
+version: 0.2.0+2
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -22,6 +22,12 @@ dependencies:
   # Ubicación / GPS
   geolocator: ^12.0.0
   permission_handler: ^11.3.1
+
+  # Notificaciones locales + vigilancia geocerca en segundo plano
+  flutter_local_notifications: ^17.2.4
+  flutter_background_service: ^5.0.10
+  timezone: ^0.9.4
+  flutter_timezone: ^1.0.8
 
   # Formato de fechas, horas y moneda (es / RD$)
   intl: ^0.19.0
