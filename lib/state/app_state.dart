@@ -11,7 +11,24 @@ import 'package:horas_trabajo/data/repositories/work_session_repository.dart';
 import 'package:horas_trabajo/data/repositories/workplace_repository.dart';
 import 'package:horas_trabajo/domain/salary/salary_engine.dart';
 import 'package:horas_trabajo/services/background_service.dart';
-import 'package:permission_handler/permission_handler.dart' as ph;
+
+/// Resultado de intentar activar la vigilancia de geocerca.
+enum MonitoreoResultado {
+  /// Vigilancia activada correctamente.
+  activado,
+
+  /// Aún no hay un lugar de trabajo guardado.
+  sinLugarTrabajo,
+
+  /// El usuario denegó el permiso de ubicación.
+  permisoDenegado,
+
+  /// Permiso denegado de forma permanente (Android no vuelve a preguntar).
+  permisoPermanente,
+
+  /// La ubicación/GPS está apagado en el sistema.
+  gpsApagado,
+}
 
 /// Estado global de la app: perfil, reglas RD, sesiones, lugar de trabajo,
 /// vigilancia de geocerca y motor de cálculo. Expuesto por `provider`.
@@ -109,20 +126,32 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Solicita el permiso de ubicación con geolocator (más fiable que
+  /// permission_handler: muestra el popup del sistema). Con [fondo]=true
+  /// intenta además obtener el acceso "Toda la hora" (Android).
+  Future<LocationPermission> solicitarPermiso({bool fondo = false}) async {
+    var permiso = await Geolocator.checkPermission();
+    if (permiso == LocationPermission.denied) {
+      permiso = await Geolocator.requestPermission();
+    }
+    // Android: una segunda petición ofrece la opción "Permitir todo el tiempo",
+    // necesaria para que la geocerca funcione en segundo plano.
+    if (fondo &&
+        permiso == LocationPermission.whileInUse &&
+        (await Geolocator.checkPermission()) == LocationPermission.whileInUse) {
+      permiso = await Geolocator.requestPermission();
+    }
+    return permiso;
+  }
+
   /// Pide permiso de ubicación (y de fondo en Android) y devuelve [lat,lng],
   /// o null si el usuario lo deniega / no hay señal.
   Future<List<double>?> pedirUbicacion({bool fondo = false}) async {
     try {
-      if (fondo) {
-        // Android: primero foreground, luego "toda la hora" (best-effort).
-        final status = await ph.Permission.location.request();
-        if (!status.isGranted) return null;
-        if (await ph.Permission.locationAlways.status.isDenied) {
-          await ph.Permission.locationAlways.request();
-        }
-      } else {
-        final status = await ph.Permission.locationWhenInUse.request();
-        if (!status.isGranted) return null;
+      final permiso = await solicitarPermiso(fondo: fondo);
+      if (permiso == LocationPermission.denied ||
+          permiso == LocationPermission.deniedForever) {
+        return null;
       }
       if (!await Geolocator.isLocationServiceEnabled()) return null;
       final pos = await Geolocator.getCurrentPosition(
@@ -136,17 +165,24 @@ class AppState extends ChangeNotifier {
   }
 
   /// Activa la vigilancia de llegada/salida (foreground service + geocerca).
-  Future<bool> activarMonitor() async {
-    final wp = _workplace;
-    if (wp == null) return false;
+  Future<MonitoreoResultado> activarMonitor() async {
+    if (_workplace == null) return MonitoreoResultado.sinLugarTrabajo;
 
-    final gps = await pedirUbicacion(fondo: true);
-    if (gps == null) return false; // sin permiso/ubicación
+    final permiso = await solicitarPermiso(fondo: true);
+    if (permiso == LocationPermission.deniedForever) {
+      return MonitoreoResultado.permisoPermanente;
+    }
+    if (permiso == LocationPermission.denied) {
+      return MonitoreoResultado.permisoDenegado;
+    }
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      return MonitoreoResultado.gpsApagado;
+    }
 
     await backgroundService.startService();
     _monitoreando = true;
     notifyListeners();
-    return true;
+    return MonitoreoResultado.activado;
   }
 
   Future<void> desactivarMonitor() async {

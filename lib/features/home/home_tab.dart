@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:horas_trabajo/core/utils/formatters.dart';
 import 'package:horas_trabajo/data/models/work_session.dart';
 import 'package:horas_trabajo/data/models/workplace.dart';
@@ -145,27 +146,45 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   Future<void> _alternarMonitor(AppState app) async {
+    final messenger = ScaffoldMessenger.of(context);
     if (app.monitoreando) {
       await app.desactivarMonitor();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Vigilancia desactivada')),
-        );
-      }
+      messenger.showSnackBar(const SnackBar(content: Text('Vigilancia desactivada')));
       return;
     }
-    final ok = await app.activarMonitor();
+    final res = await app.activarMonitor();
     if (!mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    if (ok) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Vigilando llegada y salida 🛰️')),
-      );
-    } else {
-      messenger.showSnackBar(
-        const SnackBar(
-            content: Text('No se pudo activar: permite el acceso a la ubicación.')),
-      );
+    switch (res) {
+      case MonitoreoResultado.activado:
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Vigilando llegada y salida 🛰️')),
+        );
+        break;
+      case MonitoreoResultado.sinLugarTrabajo:
+        messenger.showSnackBar(
+          const SnackBar(
+              content: Text('Primero guarda un lugar de trabajo para vigilar')),
+        );
+        break;
+      case MonitoreoResultado.permisoDenegado:
+        messenger.showSnackBar(
+          const SnackBar(
+              content: Text('Permite el acceso a la ubicación en el popup del sistema')),
+        );
+        break;
+      case MonitoreoResultado.permisoPermanente:
+        messenger.showSnackBar(
+          const SnackBar(
+              content:
+                  Text('Abre los ajustes y activa la ubicación ("Permitir todo el tiempo")')),
+        );
+        await Geolocator.openAppSettings();
+        break;
+      case MonitoreoResultado.gpsApagado:
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Activa la ubicación (GPS) del teléfono')),
+        );
+        break;
     }
   }
 
