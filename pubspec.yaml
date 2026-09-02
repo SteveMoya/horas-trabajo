@@ -1,7 +1,7 @@
 name: horas_trabajo
 description: "Registro de Horas Trabajadas — app local con cálculo salarial según Código de Trabajo RD (Ley 16-92). Material 3, 100% local."
 publish_to: "none"
-version: 0.3.0+3
+version: 0.3.1+4
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
