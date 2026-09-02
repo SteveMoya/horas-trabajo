@@ -4,9 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 /// Paletas de color primario disponibles (Material 3 genera el resto).
 class ThemePalettes {
   static const List<Color> seeds = [
-    Color(0xFF6750A4), // Morado M3 por defecto
+    Color(0xFF1565C0), // Azul — color de marca (Horas Trabajo)
     Color(0xFF00696D), // Teal
-    Color(0xFF1565C0), // Azul
+    Color(0xFF6750A4), // Morado M3 por defecto
     Color(0xFF2E7D32), // Verde
     Color(0xFFC62828), // Rojo
     Color(0xFFAD1457), // Rosa
@@ -18,7 +18,7 @@ class ThemePalettes {
 
   static String nombre(int index) {
     const names = [
-      'Morado', 'Teal', 'Azul', 'Verde', 'Rojo',
+      'Azul (marca)', 'Teal', 'Morado', 'Verde', 'Rojo',
       'Rosa', 'Naranja', 'Índigo', 'Cian', 'Neutral',
     ];
     return names[index.clamp(0, names.length - 1)];

@@ -53,6 +53,14 @@ class _HomeTabState extends State<HomeTab> {
 
     return Scaffold(
       appBar: AppBar(
+        centerTitle: false,
+        leadingWidth: 56,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12, right: 4),
+          child: Center(
+            child: Image.asset('assets/logo.png', height: 30),
+          ),
+        ),
         title: const Text('Marcar Horas'),
         actions: [
           Center(
