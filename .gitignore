@@ -1,0 +1,36 @@
+# Dependencies
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-preload-cache
+
+# Android
+android/.gradle/
+android/local.properties
+android/key.properties
+android/app/keystore.jks
+android/**/build/
+*.jks
+!android/app/keystore.jks.example
+
+# iOS/macOS
+ios/Pods/
+ios/**/Flutter/ephemeral
+**/Flutter/ephemeral/
+**/Pods/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# Misc
+.DS_Store
+*.log
+
+# Secrets
+.env
+.env.*
