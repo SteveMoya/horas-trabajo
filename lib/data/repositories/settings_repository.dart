@@ -10,6 +10,7 @@ class SettingsRepository {
   static const _kReglas = 'reglas';
   static const _kUsarUbicacion = 'usar_ubicacion';
   static const _kRecordatorios = 'recordatorios_inteligentes';
+  static const _kOnboardingCompletado = 'onboarding_completado';
 
   Future<EmployeeProfile> cargarPerfil() async {
     final prefs = await SharedPreferences.getInstance();
@@ -68,5 +69,17 @@ class SettingsRepository {
   Future<void> guardarRecordatorios(bool valor) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_kRecordatorios, valor);
+  }
+
+  /// Si es `false`, la app todavía no mostró el flujo de bienvenida
+  /// (se muestra una única vez, la primera vez que se abre la app).
+  Future<bool> cargarOnboardingCompletado() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_kOnboardingCompletado) ?? false;
+  }
+
+  Future<void> guardarOnboardingCompletado(bool valor) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kOnboardingCompletado, valor);
   }
 }

@@ -71,6 +71,7 @@ class AppState extends ChangeNotifier {
   bool _procesando = false;
   bool _usarUbicacion = true;
   bool _recordatoriosActivos = false;
+  bool _onboardingCompletado = false;
   Timer? _tick;
 
   EmployeeProfile get perfil => _perfil;
@@ -84,6 +85,7 @@ class AppState extends ChangeNotifier {
   bool get procesando => _procesando;
   bool get usarUbicacion => _usarUbicacion;
   bool get recordatoriosActivos => _recordatoriosActivos;
+  bool get onboardingCompletado => _onboardingCompletado;
 
   SalaryEngine get motor =>
       SalaryEngine(salarioMensual: _perfil.salarioMensual, reglas: _reglas);
@@ -129,6 +131,7 @@ class AppState extends ChangeNotifier {
       _workplaceRepo.getInside(),
       _settings.cargarUsarUbicacion(),
       _settings.cargarRecordatorios(),
+      _settings.cargarOnboardingCompletado(),
     ]);
     _perfil = resultados[0] as EmployeeProfile;
     _reglas = resultados[1] as RdPayRules;
@@ -138,6 +141,7 @@ class AppState extends ChangeNotifier {
     _dentro = resultados[5] as bool? ?? false;
     _usarUbicacion = resultados[6] as bool? ?? true;
     _recordatoriosActivos = resultados[7] as bool? ?? false;
+    _onboardingCompletado = resultados[8] as bool? ?? false;
     _cargando = false;
 
     _tick?.cancel();
@@ -165,6 +169,13 @@ class AppState extends ChangeNotifier {
     } else {
       await NotificationsService.cancelarRecordatorios();
     }
+  }
+
+  /// Marca la bienvenida inicial como vista para que no vuelva a mostrarse.
+  Future<void> completarOnboarding() async {
+    _onboardingCompletado = true;
+    notifyListeners();
+    await _settings.guardarOnboardingCompletado(true);
   }
 
   Future<void> guardarPerfil(EmployeeProfile perfil) async {
