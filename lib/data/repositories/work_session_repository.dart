@@ -63,4 +63,17 @@ class WorkSessionRepository {
     final db = await _database.database;
     await db.delete('sesiones', where: 'id = ?', whereArgs: [id]);
   }
+
+  /// Reemplaza TODO el historial por [sesiones] en una sola transacción.
+  /// Usado al restaurar una copia de seguridad: a diferencia de [insertar],
+  /// aquí sí se conservan los ids originales del backup.
+  Future<void> reemplazarTodas(List<WorkSession> sesiones) async {
+    final db = await _database.database;
+    await db.transaction((txn) async {
+      await txn.delete('sesiones');
+      for (final s in sesiones) {
+        await txn.insert('sesiones', s.toMap());
+      }
+    });
+  }
 }

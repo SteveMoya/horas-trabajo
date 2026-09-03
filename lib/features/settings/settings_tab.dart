@@ -4,6 +4,7 @@ import 'package:horas_trabajo/core/theme/app_theme.dart';
 import 'package:horas_trabajo/core/theme/theme_manager.dart';
 import 'package:horas_trabajo/data/models/employee_profile.dart';
 import 'package:horas_trabajo/data/models/rd_pay_rules.dart';
+import 'package:horas_trabajo/features/backup/backup_screen.dart';
 import 'package:horas_trabajo/state/app_state.dart';
 import 'package:provider/provider.dart';
 
@@ -72,6 +73,19 @@ class _SettingsTabState extends State<SettingsTab> {
             onPressed: () => _setReglas(const RdPayRules()),
             icon: const Icon(Icons.restart_alt),
             label: const Text('Restaurar valores por defecto'),
+          ),
+          const SizedBox(height: 24),
+          const _SeccionTitulo('Datos'),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.save_alt),
+              title: const Text('Copia de seguridad y exportación'),
+              subtitle: const Text('Backup JSON, CSV y restaurar'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const BackupScreen()),
+              ),
+            ),
           ),
           const SizedBox(height: 24),
         ],
