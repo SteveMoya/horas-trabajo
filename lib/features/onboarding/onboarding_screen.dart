@@ -73,6 +73,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _irA(int pagina) {
+    HapticFeedback.selectionClick();
     return _controller.animateToPage(
       pagina,
       duration: const Duration(milliseconds: 380),
@@ -107,6 +108,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await app.guardarUsarUbicacion(_usarUbicacion);
     await app.completarOnboarding();
     if (!mounted) return;
+    HapticFeedback.mediumImpact();
     Navigator.of(context).pushReplacement(
       FadeThroughRoute<void>(builder: (_) => const RootScreen()),
     );
@@ -511,18 +513,23 @@ class _TarjetaOpcion extends StatelessWidget {
       selected: seleccionada,
       label: '$titulo. $subtitulo',
       child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(PixelRadii.medium),
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        customBorder: const SquircleBorder(radius: PixelRadii.medium),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOut,
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
             color: seleccionada ? scheme.primaryContainer : scheme.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(PixelRadii.medium),
-            border: Border.all(
-              color: seleccionada ? scheme.primary : scheme.outlineVariant,
-              width: seleccionada ? 2 : 1,
+            shape: SquircleBorder(
+              radius: PixelRadii.medium,
+              side: BorderSide(
+                color: seleccionada ? scheme.primary : scheme.outlineVariant,
+                width: seleccionada ? 2 : 1,
+              ),
             ),
           ),
           child: ExcludeSemantics(

@@ -92,6 +92,30 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
         shape: SquircleBorder(radius: PixelRadii.small),
       ),
+      dialogTheme: const DialogThemeData(
+        shape: SquircleBorder(radius: PixelRadii.large),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(PixelRadii.large),
+          ),
+        ),
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        shape: SquircleBorder(radius: PixelRadii.large),
+      ),
+      chipTheme: ChipThemeData(
+        shape: const SquircleBorder(radius: PixelRadii.small),
+        side: BorderSide(color: scheme.outlineVariant),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size.fromHeight(54),
+          shape: const SquircleBorder(radius: PixelRadii.medium),
+          textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+      ),
     );
   }
 }

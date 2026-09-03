@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:horas_trabajo/core/utils/accessibility.dart';
 
 /// Envoltorio que aplica un pequeño "squish" (escala) al presionar, para dar
@@ -24,7 +25,10 @@ class _AnimatedTapScaleState extends State<AnimatedTapScale> {
   @override
   Widget build(BuildContext context) {
     return Listener(
-      onPointerDown: (_) => _set(true),
+      onPointerDown: (_) {
+        _set(true);
+        HapticFeedback.selectionClick();
+      },
       onPointerUp: (_) => _set(false),
       onPointerCancel: (_) => _set(false),
       child: AnimatedScale(
