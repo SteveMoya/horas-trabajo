@@ -133,6 +133,7 @@ class _HomeTabState extends State<HomeTab> {
                 app: app,
                 activa: activa,
                 onToggleMonitoreo: () => _alternarMonitor(app),
+                onConfigurarLugarTrabajo: () => _configurarLugarDeTrabajo(app),
               ),
             ),
             const SizedBox(height: 16),
@@ -214,6 +215,39 @@ class _HomeTabState extends State<HomeTab> {
         ],
       ),
     );
+  }
+
+  /// Guarda el lugar de trabajo a partir de la ubicación actual, sin
+  /// depender de marcar una entrada primero (antes solo se podía guardar
+  /// como efecto colateral de [_pulsarEntrada], dejando sin forma de
+  /// configurarlo a quien declinaba ese diálogo o marcaba con GPS apagado).
+  Future<void> _configurarLugarDeTrabajo(AppState app) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final gps = await app.pedirUbicacion();
+    if (!mounted) return;
+    if (gps == null) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No se pudo obtener tu ubicación. Revisa el permiso de '
+            'ubicación y que el GPS esté activo.',
+          ),
+        ),
+      );
+      return;
+    }
+    await app.guardarWorkplace(Workplace(
+      id: DateTime.now().millisecondsSinceEpoch,
+      latitud: gps[0],
+      longitud: gps[1],
+      nombre: 'Mi lugar de trabajo',
+      creadoEn: DateTime.now(),
+    ));
+    if (mounted) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Lugar de trabajo guardado ✅')),
+      );
+    }
   }
 
   Future<void> _pulsarSalida(AppState app) async {
@@ -650,11 +684,13 @@ class _TarjetaTrabajo extends StatelessWidget {
     required this.app,
     required this.activa,
     required this.onToggleMonitoreo,
+    required this.onConfigurarLugarTrabajo,
   });
 
   final AppState app;
   final WorkSession? activa;
   final VoidCallback onToggleMonitoreo;
+  final VoidCallback onConfigurarLugarTrabajo;
 
   @override
   Widget build(BuildContext context) {
@@ -733,12 +769,16 @@ class _TarjetaTrabajo extends StatelessWidget {
                 },
               )
             else
-              const ListTile(
-                leading: Icon(Icons.add_location_alt_outlined),
-                title: Text('Sin lugar de trabajo'),
+              ListTile(
+                enabled: app.usarUbicacion,
+                leading: const Icon(Icons.add_location_alt_outlined),
+                title: const Text('Sin lugar de trabajo'),
                 subtitle: Text(
-                    'Al marcar tu primera entrada podrás guardar la ubicación'),
-                onTap: null,
+                  app.usarUbicacion
+                      ? 'Toca para guardar tu ubicación actual'
+                      : 'Activa el uso de ubicación en Ajustes para guardarlo',
+                ),
+                onTap: app.usarUbicacion ? onConfigurarLugarTrabajo : null,
               ),
           ],
         ),
