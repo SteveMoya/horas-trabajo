@@ -52,9 +52,9 @@ Future<bool> onStartBackground(ServiceInstance service) async {
   service.on('stopService').listen((_) => corriendo = false);
 
   while (corriendo) {
-    final wp = await repo.getWorkplace();
-    if (wp != null) {
-      try {
+    try {
+      final wp = await repo.getWorkplace();
+      if (wp != null) {
         if (!await Geolocator.isLocationServiceEnabled()) {
           await Future<void>.delayed(
               const Duration(seconds: geofenceIntervalSegundos));
@@ -80,7 +80,10 @@ Future<bool> onStartBackground(ServiceInstance service) async {
           await repo.setInside(false);
           await NotificationsService.salida(wp);
         }
-      } catch (_) {/* sin ubicación: reintentar en el siguiente ciclo */}
+      }
+    } catch (_) {
+      // Cualquier error del ciclo no debe tumbar el aislado ni la app:
+      // se reintenta en el siguiente ciclo.
     }
     await Future<void>.delayed(const Duration(seconds: geofenceIntervalSegundos));
   }

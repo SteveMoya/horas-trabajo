@@ -11,6 +11,7 @@ import 'package:horas_trabajo/data/repositories/work_session_repository.dart';
 import 'package:horas_trabajo/data/repositories/workplace_repository.dart';
 import 'package:horas_trabajo/domain/salary/salary_engine.dart';
 import 'package:horas_trabajo/services/background_service.dart';
+import 'package:horas_trabajo/services/notifications_service.dart';
 
 /// Resultado de intentar activar la vigilancia de geocerca.
 enum MonitoreoResultado {
@@ -28,6 +29,10 @@ enum MonitoreoResultado {
 
   /// La ubicación/GPS está apagado en el sistema.
   gpsApagado,
+
+  /// No se pudo iniciar el servicio en segundo plano (p. ej. fallo nativo o
+  /// de plataforma). La app NO se cierra: se deja la vigilancia desactivada.
+  fallo,
 }
 
 /// Estado global de la app: perfil, reglas RD, sesiones, lugar de trabajo,
@@ -188,24 +193,44 @@ class AppState extends ChangeNotifier {
   }
 
   /// Activa la vigilancia de llegada/salida (foreground service + geocerca).
+  /// Nunca lanza excepciones: cualquier fallo devuelve [MonitoreoResultado.fallo]
+  /// para que la app no se cierre.
   Future<MonitoreoResultado> activarMonitor() async {
     if (_workplace == null) return MonitoreoResultado.sinLugarTrabajo;
 
-    final permiso = await solicitarPermiso(fondo: true);
-    if (permiso == LocationPermission.deniedForever) {
-      return MonitoreoResultado.permisoPermanente;
-    }
-    if (permiso == LocationPermission.denied) {
-      return MonitoreoResultado.permisoDenegado;
-    }
-    if (!await Geolocator.isLocationServiceEnabled()) {
-      return MonitoreoResultado.gpsApagado;
-    }
+    try {
+      final permiso = await solicitarPermiso(fondo: true);
+      if (permiso == LocationPermission.deniedForever) {
+        return MonitoreoResultado.permisoPermanente;
+      }
+      if (permiso == LocationPermission.denied) {
+        return MonitoreoResultado.permisoDenegado;
+      }
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        return MonitoreoResultado.gpsApagado;
+      }
 
-    await backgroundService.startService();
-    _monitoreando = true;
-    notifyListeners();
-    return MonitoreoResultado.activado;
+      // El foreground service necesita publicar una notificación persistente;
+      // en Android 13+ eso exige el permiso POST_NOTIFICATIONS.
+      try {
+        await NotificationsService.instance.requestPermission();
+      } catch (_) {/* si falla, se intenta igualmente arrancar el servicio */}
+
+      try {
+        await backgroundService.startService();
+      } catch (e) {
+        _monitoreando = false;
+        return MonitoreoResultado.fallo;
+      }
+
+      _monitoreando = true;
+      notifyListeners();
+      return MonitoreoResultado.activado;
+    } catch (e) {
+      _monitoreando = false;
+      debugPrint('activarMonitor falló: $e');
+      return MonitoreoResultado.fallo;
+    }
   }
 
   Future<void> desactivarMonitor() async {

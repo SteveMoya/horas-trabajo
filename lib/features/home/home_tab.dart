@@ -160,7 +160,17 @@ class _HomeTabState extends State<HomeTab> {
       messenger.showSnackBar(const SnackBar(content: Text('Vigilancia desactivada')));
       return;
     }
-    final res = await app.activarMonitor();
+    final MonitoreoResultado res;
+    try {
+      res = await app.activarMonitor();
+    } catch (_) {
+      if (mounted) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('No se pudo activar la vigilancia')),
+        );
+      }
+      return;
+    }
     if (!mounted) return;
     switch (res) {
       case MonitoreoResultado.activado:
@@ -191,6 +201,13 @@ class _HomeTabState extends State<HomeTab> {
       case MonitoreoResultado.gpsApagado:
         messenger.showSnackBar(
           const SnackBar(content: Text('Activa la ubicación (GPS) del teléfono')),
+        );
+        break;
+      case MonitoreoResultado.fallo:
+        messenger.showSnackBar(
+          const SnackBar(
+              content:
+                  Text('No se pudo iniciar la vigilancia. Asegúrate de permitir las notificaciones y vuelve a intentarlo')),
         );
         break;
     }
