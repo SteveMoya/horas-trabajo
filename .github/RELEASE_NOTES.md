@@ -1,6 +1,14 @@
-# Horas Trabajo RD — Beta v0.7.1
+# Horas Trabajo RD — Beta v0.7.2
 
-## Gráfico "Horas por día" (Reporte) más claro
+## Aviso de actualización más fiable 🚀
+
+- La app ahora **revisa si hay versión nueva también cada vez que vuelves a
+  primer plano** (minimizarla y reabrirla), no solo al arrancar desde cero.
+  Antes, si dejabas la app abierta, no detectaba un release recién publicado
+  hasta cerrarla del todo.
+- Se revisa la API una vez cada 3 minutos como máximo para no gastar datos.
+
+## v0.7.1 — Gráfico "Horas por día" (Reporte) más claro
 
 - El eje Y ahora **se entiende**: paso en horas enteras y redondas (0, 4, 8, 12…)
   en vez de decimales arbitrarios, con **líneas guía horizontales** para leer la

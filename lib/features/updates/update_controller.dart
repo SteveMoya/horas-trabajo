@@ -18,14 +18,28 @@ class UpdateController {
 
   static const _prefsUltimaAvisada = 'update_ultima_avisada';
 
+  /// Mínimo entre revisiones en red (evita golpear la API de GitHub en cada
+  /// "resume"). El arranque frío siempre corre la primera.
+  static const _throttle = Duration(minutes: 3);
+
+  DateTime? _ultimaVerificacion;
   UpdateInfo? _pendiente;
 
   UpdateInfo? get pendiente => _pendiente;
 
   /// Revisa si hay una actualización y, si la hay, la notifica y ofrece
-  /// actualizar. Se llama una sola vez al arrancar la app; `fromNotificacion`
+  /// actualizar. Se llama al arrancar y al volver a primer plano; `fromNotificacion`
   /// fuerza mostrar el diálogo (se invoca al tocar la notificación).
   Future<UpdateInfo?> verificar({bool fromNotificacion = false}) async {
+    final ahoraVer = DateTime.now();
+    if (!fromNotificacion &&
+        _ultimaVerificacion != null &&
+        ahoraVer.difference(_ultimaVerificacion!) < _throttle) {
+      // Revisión en red muy reciente: devuelve lo ya conocido sin golpear la red.
+      return _pendiente;
+    }
+    _ultimaVerificacion = ahoraVer;
+
     final info = await UpdateService.instance.verificar();
     if (info == null) return null;
     _pendiente = info;
