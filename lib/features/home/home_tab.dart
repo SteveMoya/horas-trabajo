@@ -203,6 +203,13 @@ class _HomeTabState extends State<HomeTab> {
           const SnackBar(content: Text('Activa la ubicación (GPS) del teléfono')),
         );
         break;
+      case MonitoreoResultado.notificacionesDenegadas:
+        messenger.showSnackBar(
+          const SnackBar(
+              content:
+                  Text('Activa las notificaciones de la app (ajustes > Notificaciones) para poder vigilar en segundo plano')),
+        );
+        break;
       case MonitoreoResultado.fallo:
         messenger.showSnackBar(
           const SnackBar(

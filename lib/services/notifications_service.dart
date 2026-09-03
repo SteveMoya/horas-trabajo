@@ -69,6 +69,19 @@ class NotificationsService {
     } catch (_) {/* no disponible */}
   }
 
+  /// ¿Están las notificaciones habilitadas en el sistema (Android 13+)?
+  /// Devuelve true si no se puede determinar (p. ej. iOS/web o sin soporte).
+  static Future<bool> notificacionesPermitidas() async {
+    try {
+      final value = plugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+      return await value?.areNotificationsEnabled() ?? true;
+    } catch (_) {
+      return true;
+    }
+  }
+
   /// Notificación de geocerca (llegada o salida).
   static Future<void> showGeofence({
     required int id,

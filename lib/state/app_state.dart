@@ -30,6 +30,11 @@ enum MonitoreoResultado {
   /// La ubicación/GPS está apagado en el sistema.
   gpsApagado,
 
+  /// Android 13+: las notificaciones están denegadas y el foreground service
+  /// necesita publicar un aviso persistente. No se arranca el servicio
+  /// (evita un crash nativo); se pide al usuario activarlas.
+  notificacionesDenegadas,
+
   /// No se pudo iniciar el servicio en segundo plano (p. ej. fallo nativo o
   /// de plataforma). La app NO se cierra: se deja la vigilancia desactivada.
   fallo,
@@ -214,7 +219,10 @@ class AppState extends ChangeNotifier {
       // en Android 13+ eso exige el permiso POST_NOTIFICATIONS.
       try {
         await NotificationsService.instance.requestPermission();
-      } catch (_) {/* si falla, se intenta igualmente arrancar el servicio */}
+      } catch (_) {/* se chequea igualmente debajo */}
+      if (!await NotificationsService.notificacionesPermitidas()) {
+        return MonitoreoResultado.notificacionesDenegadas;
+      }
 
       try {
         await backgroundService.startService();

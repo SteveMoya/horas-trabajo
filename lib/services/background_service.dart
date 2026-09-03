@@ -42,50 +42,54 @@ Future<bool> onIosHandler(ServiceInstance service) async {
 
 @pragma('vm:entry-point')
 Future<bool> onStartBackground(ServiceInstance service) async {
-  WidgetsFlutterBinding.ensureInitialized();
-  DartPluginRegistrant.ensureInitialized();
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    DartPluginRegistrant.ensureInitialized();
 
-  final repo = WorkplaceRepository();
-  await NotificationsService.initZonaHoraria();
+    final repo = WorkplaceRepository();
+    await NotificationsService.initZonaHoraria();
 
-  var corriendo = true;
-  service.on('stopService').listen((_) => corriendo = false);
+    var corriendo = true;
+    service.on('stopService').listen((_) => corriendo = false);
 
-  while (corriendo) {
-    try {
-      final wp = await repo.getWorkplace();
-      if (wp != null) {
-        if (!await Geolocator.isLocationServiceEnabled()) {
-          await Future<void>.delayed(
-              const Duration(seconds: geofenceIntervalSegundos));
-          continue;
+    while (corriendo) {
+      try {
+        final wp = await repo.getWorkplace();
+        if (wp != null) {
+          if (!await Geolocator.isLocationServiceEnabled()) {
+            await Future<void>.delayed(
+                const Duration(seconds: geofenceIntervalSegundos));
+            continue;
+          }
+          final pos = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high,
+            timeLimit: const Duration(seconds: 10),
+          );
+          final dist = Geolocator.distanceBetween(
+            wp.latitud,
+            wp.longitud,
+            pos.latitude,
+            pos.longitude,
+          );
+          final dentro = dist <= wp.radioMetros;
+          final previo = await repo.getInside() ?? false;
+
+          if (dentro && !previo) {
+            await repo.setInside(true);
+            await NotificationsService.llegada(wp);
+          } else if (!dentro && previo) {
+            await repo.setInside(false);
+            await NotificationsService.salida(wp);
+          }
         }
-        final pos = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-          timeLimit: const Duration(seconds: 10),
-        );
-        final dist = Geolocator.distanceBetween(
-          wp.latitud,
-          wp.longitud,
-          pos.latitude,
-          pos.longitude,
-        );
-        final dentro = dist <= wp.radioMetros;
-        final previo = await repo.getInside() ?? false;
-
-        if (dentro && !previo) {
-          await repo.setInside(true);
-          await NotificationsService.llegada(wp);
-        } else if (!dentro && previo) {
-          await repo.setInside(false);
-          await NotificationsService.salida(wp);
-        }
+      } catch (_) {
+        // Cualquier error puntual no debe tumbar el aislado ni la app.
       }
-    } catch (_) {
-      // Cualquier error del ciclo no debe tumbar el aislado ni la app:
-      // se reintenta en el siguiente ciclo.
+      await Future<void>.delayed(
+          const Duration(seconds: geofenceIntervalSegundos));
     }
-    await Future<void>.delayed(const Duration(seconds: geofenceIntervalSegundos));
+  } catch (_) {
+    // Incluso un fallo de inicialización no debe cerrar la aplicación.
   }
   return true;
 }
