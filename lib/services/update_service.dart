@@ -188,8 +188,10 @@ class UpdateService {
       try {
         final res = await _canal.invokeMethod<String>('instalar', {'ruta': ruta});
         switch (res) {
-          case 'ok':
-            return const InstalacionResumen(InstalacionResultado.exito);
+          case 'instalado':
+            return const InstalacionResumen(InstalacionResultado.instalado);
+          case 'cancelado':
+            return const InstalacionResumen(InstalacionResultado.cancelado);
           case 'permiso':
             return const InstalacionResumen(
               InstalacionResultado.permisoRequerido,
@@ -217,7 +219,7 @@ class UpdateService {
     final res = await OpenFilex.open(
         ruta, type: 'application/vnd.android.package-archive');
     if (res.type == ResultType.done) {
-      return const InstalacionResumen(InstalacionResultado.exito);
+      return const InstalacionResumen(InstalacionResultado.instalado);
     }
     return InstalacionResumen(InstalacionResultado.error, res.message);
   }
@@ -245,7 +247,7 @@ class UpdateService {
 }
 
 /// Resultado de intentar abrir el instalador del APK.
-enum InstalacionResultado { exito, error, permisoRequerido }
+enum InstalacionResultado { instalado, cancelado, error, permisoRequerido }
 
 class InstalacionResumen {
   const InstalacionResumen(this.resultado, [this.mensaje]);

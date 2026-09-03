@@ -1,6 +1,15 @@
-# Horas Trabajo RD — Beta v0.7.3
+# Horas Trabajo RD — Beta v0.7.4
 
-## Instalación de la actualización corregida 🛠️
+## Instalación sin re-descargar y con resultado visible ✅
+
+- Al actualizar, la app **instala el archivo que ya bajó**: si cancelas o
+  concedes el permiso y vuelves a pulsar actualizar, no vuelve a descargar los
+  60 MB (reutiliza el APK en caché).
+- Ahora la app te **muestra el resultado de la instalación**: si la actualización
+  se instaló ("✅ instalada") o si la cancelaste ("Instalación cancelada"),
+  dentro del propio diálogo, con opción de reintentar.
+
+## v0.7.3 — Instalación de la actualización corregida 🛠️
 
 - La descarga terminaba pero la **instalación podía no arrancar** sin avisar.
   Ahora:

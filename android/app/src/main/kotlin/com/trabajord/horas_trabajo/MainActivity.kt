@@ -12,6 +12,12 @@ import java.io.File
 
 class MainActivity : FlutterActivity() {
     private val canal = "horas_trabajo/instalador"
+    private val REQUEST_INSTALAR = 0x0A5E
+
+    /// Result del método "instalar" que se completa cuando el PackageInstaller
+    /// termina (al volver de su pantalla con onActivityResult), para que la app
+    /// pueda mostrar el resultado de la instalación.
+    private var resultadoInstalacionPendiente: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -26,18 +32,52 @@ class MainActivity : FlutterActivity() {
                     val ruta = call.argument<String>("ruta")
                     if (ruta == null) {
                         result.error("SIN_RUTA", "La ruta del APK es nula", null)
+                    } else if (!puedeInstalarAppsDesconocidas()) {
+                        result.success("permiso")
                     } else {
-                        val res = instalarApk(ruta)
-                        when (res) {
-                            "permiso" -> result.success("permiso")
-                            "ok" -> result.success("ok")
-                            else -> result.success("error:$res")
+                        val archivo = File(ruta)
+                        if (!archivo.exists()) {
+                            result.success("error:noExiste")
+                        } else {
+                            // Guardamos el result para completarlo al volver del
+                            // instalador (onActivityResult) y así reportar si se
+                            // instaló, se canceló o falló.
+                            resultadoInstalacionPendiente = result
+                            try {
+                                lanzarInstalador(archivo)
+                            } catch (e: Exception) {
+                                resultadoInstalacionPendiente = null
+                                result.success("error:lanzamiento:${e.message ?: e.javaClass.simpleName}")
+                            }
                         }
                     }
                 }
                 else -> result.notImplemented()
             }
         }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_INSTALAR && resultadoInstalacionPendiente != null) {
+            val res = when (resultCode) {
+                RESULT_OK -> "instalado"
+                RESULT_CANCELED -> "cancelado"
+                else -> "error:resultadoDesconocido"
+            }
+            resultadoInstalacionPendiente?.success(res)
+            resultadoInstalacionPendiente = null
+        }
+    }
+
+    private fun lanzarInstalador(archivo: File) {
+        val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", archivo)
+        val intent = Intent(Intent.ACTION_VIEW)
+        intent.setDataAndType(uri, "application/vnd.android.package-archive")
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        // Sin FLAG_ACTIVITY_NEW_TASK: queremos que el resultado de la instalación
+        // vuelva a esta activity (startActivityForResult).
+        startActivityForResult(intent, REQUEST_INSTALAR)
     }
 
     /// Android 8+ exige que la app tenga permitido instalar desde este origen
@@ -60,8 +100,6 @@ class MainActivity : FlutterActivity() {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
         } catch (_: Exception) {
-            // En algunos launcher no hay activity para ese ajuste; caemos a
-            // la lista general de apps de mi app.
             try {
                 startActivity(
                     Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
@@ -70,30 +108,6 @@ class MainActivity : FlutterActivity() {
             } catch (_: Exception) {
                 // sin ajustes accesibles
             }
-        }
-    }
-
-    private fun instalarApk(ruta: String): String {
-        if (!puedeInstalarAppsDesconocidas()) return "permiso"
-
-        val archivo = File(ruta)
-        if (!archivo.exists()) return "noExiste"
-
-        return try {
-            val uri = FileProvider.getUriForFile(
-                this,
-                "$packageName.fileprovider",
-                archivo
-            )
-            val intent = Intent(Intent.ACTION_VIEW)
-            intent.setDataAndType(uri, "application/vnd.android.package-archive")
-            intent.addFlags(
-                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK
-            )
-            startActivity(intent)
-            "ok"
-        } catch (e: Exception) {
-            "lanzamientoError:${e.message ?: e.javaClass.simpleName}"
         }
     }
 }

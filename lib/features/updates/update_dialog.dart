@@ -18,6 +18,8 @@ class _UpdateDialogState extends State<UpdateDialog> {
   int _descargados = 0;
   int _total = 0;
   String? _error;
+  String? _resultadoMensaje;   // mensaje del resultado final de la instalación
+  bool _resultadoExitoso = false;
 
   UpdateInfo get _info => widget.info;
 
@@ -34,10 +36,14 @@ class _UpdateDialogState extends State<UpdateDialog> {
       _descargando = true;
       _error = null;
       _permisoFalta = false;
+      _resultadoMensaje = null;
+      _resultadoExitoso = false;
       _descargados = 0;
       _total = _info.apkSizeBytes;
     });
     try {
+      // descargarAPK reutiliza el archivo ya descargado (mismo tamaño): si el
+      // usuario reintenta tras cancelar o conceder el permiso, NO se re-descarga.
       final ruta = await UpdateService.instance.descargarAPK(
         _info,
         onProgress: (d, t) {
@@ -53,9 +59,20 @@ class _UpdateDialogState extends State<UpdateDialog> {
       final resumen = await UpdateService.instance.instalar(ruta);
       if (!mounted) return;
       switch (resumen.resultado) {
-        case InstalacionResultado.exito:
-          // El instalador del sistema ya está abierto sobre la app.
-          Navigator.of(context).pop();
+        case InstalacionResultado.instalado:
+          setState(() {
+            _descargando = false;
+            _resultadoExitoso = true;
+            _resultadoMensaje =
+                '✅ Actualización ${_info.version} instalada correctamente.';
+          });
+          break;
+        case InstalacionResultado.cancelado:
+          setState(() {
+            _descargando = false;
+            _resultadoMensaje = 'Instalación cancelada. '
+                'El archivo ya está descargado; puedes reintentar cuando quieras.';
+          });
           break;
         case InstalacionResultado.permisoRequerido:
           setState(() {
@@ -67,7 +84,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
         case InstalacionResultado.error:
           setState(() {
             _descargando = false;
-            _error = 'No se pudo abrir el instalador: '
+            _error = 'No se pudo instalar: '
                 '${resumen.mensaje ?? 'error desconocido'}';
           });
           break;
@@ -131,6 +148,24 @@ class _UpdateDialogState extends State<UpdateDialog> {
                   style: theme.textTheme.bodySmall),
             ),
           ],
+          if (_resultadoMensaje != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _resultadoExitoso
+                    ? scheme.primaryContainer.withValues(alpha: 0.6)
+                    : scheme.surfaceContainerHighest.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(_resultadoMensaje!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: _resultadoExitoso
+                          ? scheme.onPrimaryContainer
+                          : scheme.onSurface)),
+            ),
+          ],
           if (_error != null) ...[
             const SizedBox(height: 12),
             Container(
@@ -167,7 +202,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
           const SizedBox(height: 8),
           Text(
             _progreso >= 1
-                ? 'Abriendo el instalador…'
+                ? 'Esperando confirmación de instalación…'
                 : 'Descargando ${_info.apkSizeBytes > 0 ? (_descargados ~/ (1024 * 1024)) : 0} de $_tamano…',
             style: theme.textTheme.bodySmall,
           ),
@@ -194,8 +229,20 @@ class _UpdateDialogState extends State<UpdateDialog> {
       actions: [
         if (_descargando)
           const TextButton(onPressed: null, child: Text('Espera…'))
+        else if (_resultadoExitoso)
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cerrar'),
+          )
         else ...[
-          if (_permisoFalta)
+          if (_resultadoMensaje != null)
+            // Instalación cancelada: reintenta sin re-descargar (archivo en caché).
+            FilledButton.icon(
+              onPressed: _actualizar,
+              icon: const Icon(Icons.download_done, size: 20),
+              label: const Text('Actualizar de nuevo'),
+            )
+          else if (_permisoFalta)
             FilledButton.icon(
               onPressed: _permitirInstalacion,
               icon: const Icon(Icons.settings, size: 20),
@@ -209,7 +256,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
             ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Más tarde'),
+            child: Text(_resultadoMensaje != null ? 'Cerrar' : 'Más tarde'),
           ),
         ],
       ],
