@@ -1,6 +1,20 @@
-# Horas Trabajo RD — Beta v0.7.0
+# Horas Trabajo RD — Beta v0.7.1
 
-## Cronómetro circular de jornada (Inicio)
+## Gráfico "Horas por día" (Reporte) más claro
+
+- El eje Y ahora **se entiende**: paso en horas enteras y redondas (0, 4, 8, 12…)
+  en vez de decimales arbitrarios, con **líneas guía horizontales** para leer la
+  altura de cada barra contra la escala.
+- Se indica la **unidad ("Horas")** en el eje izquierdo.
+- El techo del gráfico se redondea al múltiplo del paso (sin números feos).
+
+## Inicio menos redundante
+
+- Quité la píldora de duración que se repetía encima del botón de marcar: los
+  datos de horas ya viven en el **cronómetro circular**, así la pantalla queda
+  más limpia y sin información duplicada.
+
+## v0.7.0 — Cronómetro circular de jornada (Inicio) + Actualizaciones automáticas 🚀
 
 - Al marcar la **entrada**, la tarjeta principal muestra un **cronómetro
   circular** que se llena segundo a segundo y **cambia de color según la

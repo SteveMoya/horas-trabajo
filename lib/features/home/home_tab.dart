@@ -480,32 +480,6 @@ class _TarjetaMarcador extends StatelessWidget {
                     color: enCurso ? scheme.primary : scheme.onSurfaceVariant,
                   ),
             ),
-            const SizedBox(height: 10),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              transitionBuilder: (child, animation) => FadeTransition(
-                opacity: animation,
-                child: ScaleTransition(scale: animation, child: child),
-              ),
-              child: enCurso
-                  ? Container(
-                      key: const ValueKey('badge-duracion'),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 18, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: scheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Text(
-                        Fmt.duracionExtendida(duraActiva),
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              fontFeatures: const [FontFeature.tabularFigures()],
-                            ),
-                      ),
-                    )
-                  : const SizedBox(key: ValueKey('badge-vacio')),
-            ),
             const SizedBox(height: 22),
             AnimatedTapScale(
               child: SizedBox(

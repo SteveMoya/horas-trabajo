@@ -323,6 +323,11 @@ class _TarjetaGraficoDias extends StatelessWidget {
     final sinActividad = maxHoras <= 0;
     final barraAncha = horasPorDia.length <= 10;
 
+    // Eje Y legible: paso redondo (n.º entero de horas) y techo redondeado al
+    // múltiplo del paso, con líneas guía horizontales para leer cada valor.
+    final paso = _pasoHoras(maxHoras);
+    final techoY = _techoHoras(maxHoras, paso);
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
@@ -346,8 +351,16 @@ class _TarjetaGraficoDias extends StatelessWidget {
                     )
                   : BarChart(
                       BarChartData(
-                        maxY: maxHoras * 1.2,
-                        gridData: const FlGridData(show: false),
+                        maxY: techoY,
+                        gridData: FlGridData(
+                          show: true,
+                          drawVerticalLine: false,
+                          horizontalInterval: paso,
+                          getDrawingHorizontalLine: (v) => FlLine(
+                            color: scheme.outlineVariant.withValues(alpha: 0.45),
+                            strokeWidth: 1,
+                          ),
+                        ),
                         borderData: FlBorderData(show: false),
                         titlesData: FlTitlesData(
                           topTitles: const AxisTitles(
@@ -355,10 +368,35 @@ class _TarjetaGraficoDias extends StatelessWidget {
                           rightTitles: const AxisTitles(
                               sideTitles: SideTitles(showTitles: false)),
                           leftTitles: AxisTitles(
+                            // Título del eje: aclara la unidad de las barras.
+                            axisNameWidget: Text('Horas',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelMedium
+                                    ?.copyWith(
+                                        color: scheme.onSurfaceVariant,
+                                        fontWeight: FontWeight.w600)),
+                            axisNameSize: 22,
                             sideTitles: SideTitles(
                               showTitles: true,
-                              reservedSize: 30,
-                              interval: maxHoras <= 0 ? 1 : null,
+                              reservedSize: 32,
+                              interval: paso,
+                              getTitlesWidget: (value, meta) {
+                                // Redondear al múltiplo de paso más cercano:
+                                // fl_chart pasa valores con leve error de
+                                // punto flotante (p. ej. 4.0000001) que rompería
+                                // un filtro `value % paso == 0` y ocultaría todo.
+                                final v = (value / paso).roundToDouble() * paso;
+                                final esEntero = (v % 1).abs() < 0.001;
+                                final texto = esEntero
+                                    ? v.toInt().toString()
+                                    : v.toStringAsFixed(1);
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 4),
+                                  child: Text(texto,
+                                      style: Theme.of(context).textTheme.bodySmall),
+                                );
+                              },
                             ),
                           ),
                           bottomTitles: AxisTitles(
@@ -399,6 +437,20 @@ class _TarjetaGraficoDias extends StatelessWidget {
       ),
     );
   }
+
+  /// Paso del eje Y en horas enteras (redondo) según el máximo de horas del
+  /// período, para que las marcas sean fáciles de leer.
+  double _pasoHoras(double maxH) {
+    if (maxH <= 2) return 0.5;
+    if (maxH <= 4) return 1;
+    if (maxH <= 8) return 2;
+    if (maxH <= 16) return 4;
+    return 8;
+  }
+
+  /// Redondea el máximo hacia arriba al siguiente múltiplo de [paso].
+  double _techoHoras(double v, double paso) =>
+      v <= 0 ? paso : (v / paso).ceilToDouble() * paso;
 }
 
 class _TarjetaGraficoCategorias extends StatelessWidget {
