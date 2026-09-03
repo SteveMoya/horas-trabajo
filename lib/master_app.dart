@@ -3,6 +3,7 @@ import 'package:horas_trabajo/core/theme/app_theme.dart';
 import 'package:horas_trabajo/core/theme/theme_manager.dart';
 import 'package:horas_trabajo/features/onboarding/onboarding_screen.dart';
 import 'package:horas_trabajo/features/root/root_screen.dart';
+import 'package:horas_trabajo/features/updates/update_controller.dart';
 import 'package:horas_trabajo/state/app_state.dart';
 import 'package:provider/provider.dart';
 
@@ -21,6 +22,7 @@ class HiApp extends StatelessWidget {
     return MaterialApp(
       title: 'Horas Trabajo',
       debugShowCheckedModeBanner: false,
+      navigatorKey: UpdateController.instance.navigatorKey,
       themeMode: theme.mode,
       theme: AppTheme.light(theme.seed),
       darkTheme: AppTheme.dark(theme.seed),

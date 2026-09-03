@@ -19,10 +19,10 @@ void main() {
   });
 
   testWidgets('captura pantalla Inicio', (tester) async {
-    // Inicio relativo a "ahora − 5h30m" para que el relleno del cronómetro sea
-    // determinista (fase ordinaria) en cualquier momento en que corra el test.
-    final inicio =
-        DateTime.now().subtract(const Duration(hours: 5, minutes: 30));
+    // Reloj fijo + inicio fijo: la cabecera (hora) y el relleno del cronómetro
+    // (5h30m → fase ordinaria) quedan deterministas en cualquier corrida.
+    final ahora = DateTime(2026, 1, 15, 12, 30);
+    final inicio = ahora.subtract(const Duration(hours: 5, minutes: 30));
 
     final activa = WorkSession(
       id: 1,
@@ -78,7 +78,7 @@ void main() {
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
           theme: theme,
-          home: const HomeTab(),
+          home: HomeTab(clock: () => ahora),
         ),
       ),
     );

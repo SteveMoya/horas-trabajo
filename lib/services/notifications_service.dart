@@ -23,10 +23,17 @@ class NotificationsService {
   static const idRecordatorioEntrada = 7003;
   static const idRecordatorioSalida = 7004;
 
+  /// Canal de avisos de actualización disponible.
+  static const _channelActualizaciones = 'actualizaciones';
+  static const int idActualizacion = 7005;
+
   static FlutterLocalNotificationsPlugin? _plugin;
 
   /// Alguien tocó la acción "Marcar ahora" con [payload].
   static Future<void> Function(String payload)? onMarcar;
+
+  /// Alguien tocó la notificación de actualización disponible.
+  static Future<void> Function()? onActualizacionTap;
 
   static FlutterLocalNotificationsPlugin get plugin =>
       _plugin ??= FlutterLocalNotificationsPlugin();
@@ -47,8 +54,12 @@ class NotificationsService {
   }
 
   /// Inicializa el plugin (una vez) y registra el manejador de toques.
-  Future<void> init({Future<void> Function(String payload)? onMarcarTap}) async {
+  Future<void> init({
+    Future<void> Function(String payload)? onMarcarTap,
+    Future<void> Function()? onActualizacionTap2,
+  }) async {
     if (onMarcarTap != null) onMarcar = onMarcarTap;
+    if (onActualizacionTap2 != null) onActualizacionTap = onActualizacionTap2;
 
     await initZonaHoraria();
 
@@ -65,6 +76,8 @@ class NotificationsService {
         if (resp.actionId == GeofenceAction.mark ||
             (resp.payload?.startsWith('mark:') ?? false)) {
           onMarcar?.call(resp.payload ?? GeofenceAction.payloadEntrada);
+        } else if (resp.payload == 'update') {
+          onActualizacionTap?.call();
         }
       },
     );
@@ -74,6 +87,7 @@ class NotificationsService {
     // todavía, Android rechaza el startForeground() con
     // CannotPostForegroundServiceNotificationException y mata la app.
     await crearCanalGeofence();
+    await _crearCanalActualizaciones();
 
     // Permiso de notificaciones (Android 13+).
     await requestPermission();
@@ -229,6 +243,47 @@ class NotificationsService {
       await plugin.cancel(idRecordatorioEntrada);
       await plugin.cancel(idRecordatorioSalida);
     } catch (_) {/* nada que cancelar */}
+  }
+
+  // ---------------- Actualizaciones ----------------
+
+  static Future<void> _crearCanalActualizaciones() async {
+    const canal = AndroidNotificationChannel(
+      _channelActualizaciones,
+      'Actualizaciones',
+      description: 'Avisos cuando haya una versión nueva de la app disponible',
+      importance: Importance.high,
+    );
+    try {
+      await plugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(canal);
+    } catch (_) {/* dispositivo sin soporte */}
+  }
+
+  /// Notificación de que hay una versión nueva disponibble. Al tocarla se
+  /// dispara [onActualizacionTap] (abre el diálogo de actualización).
+  static Future<void> mostrarActualizacion({required String version}) async {
+    await _crearCanalActualizaciones();
+    const android = AndroidNotificationDetails(
+      _channelActualizaciones,
+      'Actualizaciones',
+      channelDescription: 'Avisos cuando haya una versión nueva de la app disponible',
+      importance: Importance.high,
+      priority: Priority.high,
+      category: AndroidNotificationCategory.recommendation,
+    );
+    const details = NotificationDetails(android: android, iOS: DarwinNotificationDetails());
+    try {
+      await plugin.show(
+        idActualizacion,
+        '🚀 Versión $version disponible',
+        'Toca para descargar e instalar la nueva actualización de Horas Trabajo.',
+        details,
+        payload: 'update',
+      );
+    } catch (_) {/* dispositivo sin soporte */}
   }
 
   static tz.TZDateTime _proximaOcurrencia(int hora, int minuto) {

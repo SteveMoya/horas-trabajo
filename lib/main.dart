@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:horas_trabajo/core/theme/theme_manager.dart';
+import 'package:horas_trabajo/features/updates/update_controller.dart';
 import 'package:horas_trabajo/master_app.dart';
 import 'package:horas_trabajo/services/background_service.dart';
 import 'package:horas_trabajo/services/home_widget_service.dart';
@@ -51,6 +52,8 @@ Future<void> _configurarServicios(AppState app) async {
   try {
     await NotificationsService.instance.init(
       onMarcarTap: (payload) => _manejarAccionMarcar(app, payload),
+      onActualizacionTap2: () =>
+          UpdateController.instance.mostrarDialogoDesdeNotificacion(),
     );
   } catch (e) {
     debugPrint('notificaciones init falló: $e');
@@ -70,6 +73,9 @@ Future<void> _configurarServicios(AppState app) async {
   } catch (e) {
     debugPrint('quick actions init falló: $e');
   }
+  // Revisión de actualizaciones desde GitHub (best-effort, nunca bloquea ni
+  // rompe el arranque). Se hace al final, tras la UI lista.
+  unawaited(UpdateController.instance.verificar());
 }
 
 /// Atajos del ícono de la app (long-press): abren la app y marcan al

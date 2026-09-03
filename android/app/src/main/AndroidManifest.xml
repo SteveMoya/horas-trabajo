@@ -12,6 +12,10 @@
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <!-- Marcado por voz -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- Revisión y actualización automática desde GitHub (API + descarga APK) -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Permite instalar la actualización descargada desde el instalador -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
 
     <application
         android:label="Horas Trabajo"

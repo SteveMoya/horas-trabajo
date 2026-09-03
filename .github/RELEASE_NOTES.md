@@ -1,6 +1,31 @@
-# Horas Trabajo RD — Beta v0.6.2
+# Horas Trabajo RD — Beta v0.7.0
 
-## Corrección: no se podía guardar el lugar de trabajo
+## Cronómetro circular de jornada (Inicio)
+
+- Al marcar la **entrada**, la tarjeta principal muestra un **cronómetro
+  circular** que se llena segundo a segundo y **cambia de color según la
+  fase** de tu jornada:
+  - 🔵 **Azul (marca)** mientras completas la jornada ordinaria (8 h,
+    configurable).
+  - 🟠 **Naranja** al superar las 8 h: el anillo sigue girando acumulando
+    **horas extra**.
+  - 🟣 **Violeta** al entrar en la **tanda nocturna** (9pm–7am).
+- Animaciones pulidas: relleno con transición suave, brillo/glow en el arco,
+  punto luminoso que avanza con el tiempo y cambio de color de fase animado.
+- El centro muestra el tiempo `HH:MM:SS` en vivo y un subtítulo contextual
+  ("Te faltan X de la jornada" / "Has ganado X en extra" / "Franja nocturna
+  activa").
+
+## Actualizaciones automáticas desde GitHub 🚀
+
+- Al abrir la app se **revisa si hay una versión nueva** en GitHub.
+- Si existe, llega una **notificación** con la versión disponible; al tocarla
+  se abre el diálogo de actualización.
+- El diálogo muestra las **novedades** de la versión y permite **descargar el
+  APK e instalarlo** directamente desde la app (con barra de progreso).
+- Se avisa una sola vez por versión para no molestar en cada arranque.
+
+## v0.6.2 — Corrección: no se podía guardar el lugar de trabajo
 
 - **Bug arreglado**: guardar el lugar de trabajo solo era posible como
   efecto colateral de marcar la primera entrada con GPS activo. Si

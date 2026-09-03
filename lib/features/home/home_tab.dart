@@ -16,7 +16,13 @@ import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class HomeTab extends StatefulWidget {
-  const HomeTab({super.key});
+  const HomeTab({super.key, this.clock});
+
+  /// Fuente de la hora actual. [SOLO TEST] permite fijar el tiempo en las
+  /// capturas golden para que el reloj de cabecera y el cronómetro sean
+  /// deterministas (si no se inyecta, usa `DateTime.now`).
+  @visibleForTesting
+  final DateTime Function()? clock;
 
   @override
   State<HomeTab> createState() => _HomeTabState();
@@ -24,15 +30,18 @@ class HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<HomeTab> {
   Timer? _tick;
-  DateTime _ahora = DateTime.now();
+  late final DateTime Function() _clock;
+  late DateTime _ahora;
   final stt.SpeechToText _voz = stt.SpeechToText();
   bool _escuchando = false;
 
   @override
   void initState() {
     super.initState();
+    _clock = widget.clock ?? DateTime.now;
+    _ahora = _clock();
     _tick = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _ahora = DateTime.now());
+      if (mounted) setState(() => _ahora = _clock());
     });
   }
 
