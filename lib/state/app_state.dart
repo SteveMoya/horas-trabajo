@@ -12,6 +12,7 @@ import 'package:horas_trabajo/data/repositories/workplace_repository.dart';
 import 'package:horas_trabajo/domain/salary/salary_engine.dart';
 import 'package:horas_trabajo/services/background_service.dart';
 import 'package:horas_trabajo/services/notifications_service.dart';
+import 'package:horas_trabajo/services/reminder_service.dart';
 
 /// Resultado de intentar activar la vigilancia de geocerca.
 enum MonitoreoResultado {
@@ -47,13 +48,16 @@ class AppState extends ChangeNotifier {
     SettingsRepository? settings,
     WorkSessionRepository? sessions,
     WorkplaceRepository? workplaceRepo,
+    ReminderService? reminders,
   })  : _settings = settings ?? SettingsRepository(),
         _sessions = sessions ?? WorkSessionRepository(),
-        _workplaceRepo = workplaceRepo ?? WorkplaceRepository();
+        _workplaceRepo = workplaceRepo ?? WorkplaceRepository(),
+        _reminders = reminders ?? ReminderService();
 
   final SettingsRepository _settings;
   final WorkSessionRepository _sessions;
   final WorkplaceRepository _workplaceRepo;
+  final ReminderService _reminders;
 
   EmployeeProfile _perfil = const EmployeeProfile();
   RdPayRules _reglas = const RdPayRules();
@@ -65,6 +69,7 @@ class AppState extends ChangeNotifier {
   bool _cargando = true;
   bool _procesando = false;
   bool _usarUbicacion = true;
+  bool _recordatoriosActivos = false;
   Timer? _tick;
 
   EmployeeProfile get perfil => _perfil;
@@ -77,6 +82,7 @@ class AppState extends ChangeNotifier {
   bool get cargando => _cargando;
   bool get procesando => _procesando;
   bool get usarUbicacion => _usarUbicacion;
+  bool get recordatoriosActivos => _recordatoriosActivos;
 
   SalaryEngine get motor =>
       SalaryEngine(salarioMensual: _perfil.salarioMensual, reglas: _reglas);
@@ -94,6 +100,7 @@ class AppState extends ChangeNotifier {
     bool monitoreando = false,
     bool dentro = false,
     bool usarUbicacion = true,
+    bool recordatoriosActivos = false,
   }) {
     _perfil = perfil;
     _reglas = const RdPayRules();
@@ -103,6 +110,7 @@ class AppState extends ChangeNotifier {
     _monitoreando = monitoreando;
     _dentro = dentro;
     _usarUbicacion = usarUbicacion;
+    _recordatoriosActivos = recordatoriosActivos;
     _cargando = false;
     _procesando = false;
     notifyListeners();
@@ -119,6 +127,7 @@ class AppState extends ChangeNotifier {
       _workplaceRepo.getWorkplace(),
       _workplaceRepo.getInside(),
       _settings.cargarUsarUbicacion(),
+      _settings.cargarRecordatorios(),
     ]);
     _perfil = resultados[0] as EmployeeProfile;
     _reglas = resultados[1] as RdPayRules;
@@ -127,6 +136,7 @@ class AppState extends ChangeNotifier {
     _workplace = resultados[4] as Workplace?;
     _dentro = resultados[5] as bool? ?? false;
     _usarUbicacion = resultados[6] as bool? ?? true;
+    _recordatoriosActivos = resultados[7] as bool? ?? false;
     _cargando = false;
 
     _tick?.cancel();
@@ -134,7 +144,26 @@ class AppState extends ChangeNotifier {
       if (_activa != null) notifyListeners();
     });
 
+    // Reprograma con el patrón más reciente en cada arranque; si el usuario
+    // los tiene apagados, no hace nada (evita alarmas huérfanas).
+    if (_recordatoriosActivos) {
+      unawaited(_reminders.recalcularYProgramar(_sesiones));
+    }
+
     notifyListeners();
+  }
+
+  /// Activa/desactiva los recordatorios "¿olvidaste marcar?". Al activar,
+  /// se calculan y programan de inmediato con el historial actual.
+  Future<void> guardarRecordatorios(bool valor) async {
+    _recordatoriosActivos = valor;
+    notifyListeners();
+    await _settings.guardarRecordatorios(valor);
+    if (valor) {
+      await _reminders.recalcularYProgramar(_sesiones);
+    } else {
+      await NotificationsService.cancelarRecordatorios();
+    }
   }
 
   Future<void> guardarPerfil(EmployeeProfile perfil) async {
@@ -275,8 +304,13 @@ class AppState extends ChangeNotifier {
 
   // ---------------- Marcado ----------------
 
-  /// Marca de entrada. Opcional [ubicacion] capturada por la UI.
-  Future<void> registrarEntrada({List<double>? ubicacion}) async {
+  /// Marca de entrada. Opcional [ubicacion] capturada por la UI. [esFeriado]
+  /// permite marcar la jornada como feriado desde el aviso de la UI (ver
+  /// FeriadosRD) sin pasar por la hoja de edición manual.
+  Future<void> registrarEntrada({
+    List<double>? ubicacion,
+    bool esFeriado = false,
+  }) async {
     if (_procesando || _activa != null) return;
     _procesando = true;
     notifyListeners();
@@ -286,6 +320,7 @@ class AppState extends ChangeNotifier {
       inicio: DateTime.now(),
       latitud: ubicacion?[0],
       longitud: ubicacion?[1],
+      esFeriado: esFeriado,
     ));
     _activa = sesion;
     _sesiones = [sesion, ..._sesiones];

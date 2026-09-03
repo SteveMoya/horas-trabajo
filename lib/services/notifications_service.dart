@@ -1,6 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:horas_trabajo/data/models/workplace.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
+import 'package:timezone/timezone.dart' as tz;
 
 /// Payloads usados para que al tocar la notificación se pueda marcar.
 class GeofenceAction {
@@ -18,6 +19,10 @@ class NotificationsService {
   static const int geofenceNotificationId = 7001;
   static const int marcarNotificacionId = 7002;
 
+  static const _channelRecordatorios = 'recordatorios';
+  static const idRecordatorioEntrada = 7003;
+  static const idRecordatorioSalida = 7004;
+
   static FlutterLocalNotificationsPlugin? _plugin;
 
   /// Alguien tocó la acción "Marcar ahora" con [payload].
@@ -26,11 +31,19 @@ class NotificationsService {
   static FlutterLocalNotificationsPlugin get plugin =>
       _plugin ??= FlutterLocalNotificationsPlugin();
 
-  /// Inicializa la zona horaria (solo datos; no se programan notificaciones).
+  /// Inicializa la zona horaria para poder programar notificaciones
+  /// (recordatorios inteligentes) con `zonedSchedule`.
+  ///
+  /// República Dominicana usa un único huso horario fijo (UTC-4, sin
+  /// horario de verano), así que se fija directamente en vez de detectar
+  /// la zona del dispositivo: eso evita reintroducir `flutter_timezone`,
+  /// que se quitó antes por incompatibilidad con el embedding de Flutter
+  /// (ver historial de commits de background_service.dart).
   static Future<void> initZonaHoraria() async {
     tzdata.initializeTimeZones();
-    // Solo usamos notificaciones inmediatas (show), no programadas,
-    // así que no requerimos fijar la zona local del dispositivo.
+    try {
+      tz.setLocalLocation(tz.getLocation('America/Santo_Domingo'));
+    } catch (_) {/* datos de zona horaria no disponibles */}
   }
 
   /// Inicializa el plugin (una vez) y registra el manejador de toques.
@@ -155,4 +168,73 @@ class NotificationsService {
         body: 'Te alejaste de ${w.nombre}. ¿Marcar la salida?',
         payload: GeofenceAction.payloadSalida,
       );
+
+  // ---------------- Recordatorios inteligentes ----------------
+
+  static Future<void> _crearCanalRecordatorios() async {
+    const canal = AndroidNotificationChannel(
+      _channelRecordatorios,
+      'Recordatorios',
+      description: 'Avisos de "¿olvidaste marcar?" según tu horario habitual',
+      importance: Importance.defaultImportance,
+    );
+    try {
+      await plugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(canal);
+    } catch (_) {/* dispositivo sin soporte */}
+  }
+
+  /// Programa (o reprograma, si ya existía) un recordatorio diario a las
+  /// [hora]:[minuto] locales. Es best-effort: no verifica en el momento del
+  /// disparo si la acción ya se hizo ese día.
+  static Future<void> programarRecordatorioDiario({
+    required int id,
+    required String title,
+    required String body,
+    required int hora,
+    required int minuto,
+  }) async {
+    await _crearCanalRecordatorios();
+    const android = AndroidNotificationDetails(
+      _channelRecordatorios,
+      'Recordatorios',
+      channelDescription:
+          'Avisos de "¿olvidaste marcar?" según tu horario habitual',
+      importance: Importance.defaultImportance,
+      priority: Priority.defaultPriority,
+    );
+    const details = NotificationDetails(
+      android: android,
+      iOS: DarwinNotificationDetails(),
+    );
+    try {
+      await plugin.zonedSchedule(
+        id,
+        title,
+        body,
+        _proximaOcurrencia(hora, minuto),
+        details,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+    } catch (_) {/* dispositivo sin soporte de alarmas exactas/zonedSchedule */}
+  }
+
+  static Future<void> cancelarRecordatorios() async {
+    try {
+      await plugin.cancel(idRecordatorioEntrada);
+      await plugin.cancel(idRecordatorioSalida);
+    } catch (_) {/* nada que cancelar */}
+  }
+
+  static tz.TZDateTime _proximaOcurrencia(int hora, int minuto) {
+    final ahora = tz.TZDateTime.now(tz.local);
+    var fecha = tz.TZDateTime(tz.local, ahora.year, ahora.month, ahora.day, hora, minuto);
+    if (fecha.isBefore(ahora)) fecha = fecha.add(const Duration(days: 1));
+    return fecha;
+  }
 }

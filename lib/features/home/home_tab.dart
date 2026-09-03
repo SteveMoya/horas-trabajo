@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:horas_trabajo/core/utils/formatters.dart';
 import 'package:horas_trabajo/data/models/work_session.dart';
 import 'package:horas_trabajo/data/models/workplace.dart';
+import 'package:horas_trabajo/domain/calendar/feriados_rd.dart';
 import 'package:horas_trabajo/domain/salary/salary_engine.dart';
 import 'package:horas_trabajo/state/app_state.dart';
 import 'package:provider/provider.dart';
@@ -157,10 +158,40 @@ class _HomeTabState extends State<HomeTab> {
       }
     }
 
-    await app.registrarEntrada(ubicacion: gps);
+    // Si hoy es feriado (Ley 139-97), ofrecer marcar la jornada como tal.
+    var esFeriado = false;
+    final feriado = FeriadosRD.feriadoEn(DateTime.now());
+    if (feriado != null && mounted) {
+      esFeriado = await _confirmarFeriado(context, feriado.nombre) ?? false;
+    }
+
+    await app.registrarEntrada(ubicacion: gps, esFeriado: esFeriado);
     if (mounted) {
       messenger.showSnackBar(const SnackBar(content: Text('Entrada registrada ⏱️')));
     }
+  }
+
+  Future<bool?> _confirmarFeriado(BuildContext context, String nombre) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(Icons.celebration_outlined, size: 34),
+        title: const Text('¿Hoy es feriado?'),
+        content: Text(
+          'Hoy es $nombre. ¿Marcar esta jornada como feriado (paga doble)?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('No'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sí, marcar'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _pulsarSalida(AppState app) async {

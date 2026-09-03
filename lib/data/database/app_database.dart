@@ -7,7 +7,7 @@ class AppDatabase {
   static final AppDatabase instance = AppDatabase._();
 
   static const _nombreDb = 'horas_trabajo.db';
-  static const _version = 1;
+  static const _version = 2;
 
   Database? _db;
 
@@ -42,7 +42,28 @@ class AppDatabase {
         await db.execute(
           'CREATE INDEX idx_sesiones_inicio ON sesiones(inicio)',
         );
+        await _crearTablaAusencias(db);
       },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await _crearTablaAusencias(db);
+        }
+      },
+    );
+  }
+
+  Future<void> _crearTablaAusencias(Database db) async {
+    await db.execute('''
+      CREATE TABLE ausencias (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fechaInicio TEXT NOT NULL,
+        fechaFin TEXT NOT NULL,
+        tipo TEXT NOT NULL,
+        nota TEXT NOT NULL DEFAULT ''
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX idx_ausencias_fechaInicio ON ausencias(fechaInicio)',
     );
   }
 }

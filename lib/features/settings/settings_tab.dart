@@ -5,6 +5,8 @@ import 'package:horas_trabajo/core/theme/theme_manager.dart';
 import 'package:horas_trabajo/data/models/employee_profile.dart';
 import 'package:horas_trabajo/data/models/rd_pay_rules.dart';
 import 'package:horas_trabajo/features/backup/backup_screen.dart';
+import 'package:horas_trabajo/features/calendario/calendario_screen.dart';
+import 'package:horas_trabajo/services/reminder_service.dart';
 import 'package:horas_trabajo/state/app_state.dart';
 import 'package:provider/provider.dart';
 
@@ -20,6 +22,7 @@ class _SettingsTabState extends State<SettingsTab> {
   TextEditingController? _salario;
   RdPayRules _reglas = const RdPayRules();
   bool _usarUbicacion = true;
+  bool _recordatorios = false;
 
   @override
   void didChangeDependencies() {
@@ -33,6 +36,7 @@ class _SettingsTabState extends State<SettingsTab> {
     );
     _reglas = app.reglas;
     _usarUbicacion = app.usarUbicacion;
+    _recordatorios = app.recordatoriosActivos;
   }
 
   @override
@@ -44,7 +48,11 @@ class _SettingsTabState extends State<SettingsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final app = context.read<AppState>();
+    // watch (no read): esta pantalla muestra app.sesiones.length para la
+    // gate de "Recordatorios inteligentes", que cambia mientras la app
+    // sigue viva sin que esta pestaña se reconstruya sola (IndexedStack
+    // mantiene todas las tabs montadas y solo cambia cuál se ve).
+    final app = context.watch<AppState>();
     return Scaffold(
       appBar: AppBar(title: const Text('Ajustes')),
       body: ListView(
@@ -63,6 +71,13 @@ class _SettingsTabState extends State<SettingsTab> {
             onChanged: _setUsarUbicacion,
           ),
           const SizedBox(height: 24),
+          const _SeccionTitulo('Recordatorios'),
+          _CardRecordatorios(
+            activo: _recordatorios,
+            sesionesCerradas: app.sesiones.where((s) => s.fin != null).length,
+            onChanged: _setRecordatorios,
+          ),
+          const SizedBox(height: 24),
           const _SeccionTitulo('Apariencia'),
           const _CardTema(),
           const SizedBox(height: 24),
@@ -77,14 +92,28 @@ class _SettingsTabState extends State<SettingsTab> {
           const SizedBox(height: 24),
           const _SeccionTitulo('Datos'),
           Card(
-            child: ListTile(
-              leading: const Icon(Icons.save_alt),
-              title: const Text('Copia de seguridad y exportación'),
-              subtitle: const Text('Backup JSON, CSV y restaurar'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const BackupScreen()),
-              ),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.event_outlined),
+                  title: const Text('Calendario'),
+                  subtitle: const Text('Feriados RD, vacaciones y permisos'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(builder: (_) => const CalendarioScreen()),
+                  ),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.save_alt),
+                  title: const Text('Copia de seguridad y exportación'),
+                  subtitle: const Text('Backup JSON, CSV y restaurar'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(builder: (_) => const BackupScreen()),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),
@@ -117,6 +146,11 @@ class _SettingsTabState extends State<SettingsTab> {
   Future<void> _setUsarUbicacion(bool valor) async {
     setState(() => _usarUbicacion = valor);
     await context.read<AppState>().guardarUsarUbicacion(valor);
+  }
+
+  Future<void> _setRecordatorios(bool valor) async {
+    setState(() => _recordatorios = valor);
+    await context.read<AppState>().guardarRecordatorios(valor);
   }
 }
 
@@ -212,6 +246,38 @@ class _CardUbicacion extends StatelessWidget {
         secondary: Icon(
           usarUbicacion ? Icons.location_on : Icons.location_off,
         ),
+      ),
+    );
+  }
+}
+
+class _CardRecordatorios extends StatelessWidget {
+  const _CardRecordatorios({
+    required this.activo,
+    required this.sesionesCerradas,
+    required this.onChanged,
+  });
+
+  final bool activo;
+  final int sesionesCerradas;
+  final ValueChanged<bool> onChanged;
+
+  bool get _hayDatosSuficientes => sesionesCerradas >= ReminderService.minimoSesiones;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: SwitchListTile(
+        value: activo,
+        onChanged: _hayDatosSuficientes ? onChanged : null,
+        title: const Text('Recordatorios inteligentes'),
+        subtitle: Text(
+          _hayDatosSuficientes
+              ? '¿Olvidaste marcar? según tu horario habitual'
+              : 'Registra al menos ${ReminderService.minimoSesiones} jornadas '
+                  'completas para activar esta función',
+        ),
+        secondary: const Icon(Icons.alarm_outlined),
       ),
     );
   }
