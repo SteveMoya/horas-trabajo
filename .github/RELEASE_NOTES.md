@@ -1,6 +1,18 @@
-# Horas Trabajo RD — Beta v0.6.0
+# Horas Trabajo RD — Beta v0.6.1
 
-## Bienvenida y experiencia pulida
+## Consistencia visual y feedback táctil
+
+- **Formas Pixel en toda la app**: las esquinas continuas ("squircle",
+  la seña visual de Material You / Pixel) que ya tenían las tarjetas y
+  botones ahora se extienden a diálogos, el botón flotante, los chips
+  y la tarjeta de opción del onboarding — antes caían al shape circular
+  por defecto de Material, rompiendo la consistencia.
+- **Feedback háptico**: la app ahora vibra al presionar los botones
+  principales, al avanzar/retroceder en el onboarding, al elegir una
+  opción, y al completar la bienvenida inicial — hasta ahora no había
+  ningún haptic en toda la app.
+
+## v0.6.0 — Bienvenida y experiencia pulida
 
 - **Onboarding inicial**: la primera vez que abres la app, un recorrido de
   bienvenida presenta las funciones principales y recoge tu nombre, salario
