@@ -479,10 +479,13 @@ class _TarjetaIngresoEnVivo extends StatelessWidget {
               children: [
                 Icon(Icons.trending_up, color: scheme.primary),
                 const SizedBox(width: 8),
-                Text('Ganado en esta jornada',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        )),
+                Expanded(
+                  child: Text('Ganado en esta jornada',
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          )),
+                ),
               ],
             ),
             const SizedBox(height: 8),
