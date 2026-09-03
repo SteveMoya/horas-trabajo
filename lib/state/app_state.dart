@@ -11,6 +11,7 @@ import 'package:horas_trabajo/data/repositories/work_session_repository.dart';
 import 'package:horas_trabajo/data/repositories/workplace_repository.dart';
 import 'package:horas_trabajo/domain/salary/salary_engine.dart';
 import 'package:horas_trabajo/services/background_service.dart';
+import 'package:horas_trabajo/services/home_widget_service.dart';
 import 'package:horas_trabajo/services/notifications_service.dart';
 import 'package:horas_trabajo/services/reminder_service.dart';
 
@@ -326,6 +327,7 @@ class AppState extends ChangeNotifier {
     _sesiones = [sesion, ..._sesiones];
     _procesando = false;
     notifyListeners();
+    unawaited(actualizarHomeWidget());
   }
 
   /// Marca de salida.
@@ -344,6 +346,7 @@ class AppState extends ChangeNotifier {
     ];
     _procesando = false;
     notifyListeners();
+    unawaited(actualizarHomeWidget());
   }
 
   Future<void> actualizarSesion(WorkSession sesion) async {

@@ -38,6 +38,9 @@ dependencies:
   share_plus: ^13.3.0
   file_picker: ^12.2.0
   fl_chart: ^1.2.0
+  home_widget: ^0.9.3
+  quick_actions: ^1.1.0
+  speech_to_text: ^7.4.0
 
 dev_dependencies:
   flutter_test:

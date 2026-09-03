@@ -9,6 +9,7 @@ import 'package:horas_trabajo/domain/calendar/feriados_rd.dart';
 import 'package:horas_trabajo/domain/salary/salary_engine.dart';
 import 'package:horas_trabajo/state/app_state.dart';
 import 'package:provider/provider.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -20,6 +21,8 @@ class HomeTab extends StatefulWidget {
 class _HomeTabState extends State<HomeTab> {
   Timer? _tick;
   DateTime _ahora = DateTime.now();
+  final stt.SpeechToText _voz = stt.SpeechToText();
+  bool _escuchando = false;
 
   @override
   void initState() {
@@ -32,6 +35,7 @@ class _HomeTabState extends State<HomeTab> {
   @override
   void dispose() {
     _tick?.cancel();
+    unawaited(_voz.stop());
     super.dispose();
   }
 
@@ -99,6 +103,8 @@ class _HomeTabState extends State<HomeTab> {
               procesando: app.procesando,
               onEntrada: () => _pulsarEntrada(app),
               onSalida: () => _pulsarSalida(app),
+              escuchando: _escuchando,
+              onVoz: () => _alternarEscucha(app),
             ),
             if (activa != null) ...[
               const SizedBox(height: 16),
@@ -201,6 +207,62 @@ class _HomeTabState extends State<HomeTab> {
           .showSnackBar(const SnackBar(content: Text('Salida registrada ✅')));
     }
   }
+
+  // ----- Marcado por voz -----
+
+  Future<void> _alternarEscucha(AppState app) async {
+    final messenger = ScaffoldMessenger.of(context);
+    if (_escuchando) {
+      await _voz.stop();
+      if (mounted) setState(() => _escuchando = false);
+      return;
+    }
+
+    final disponible = await _voz.initialize();
+    if (!disponible) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Reconocimiento de voz no disponible')),
+      );
+      return;
+    }
+
+    setState(() => _escuchando = true);
+    // Sin localeId explícito: usa el idioma configurado en el dispositivo
+    // (evita fallar si "es_DO" no está entre los paquetes de voz instalados).
+    await _voz.listen(
+      onResult: (resultado) {
+        if (!resultado.finalResult) return;
+        _procesarComandoVoz(app, resultado.recognizedWords);
+      },
+    );
+  }
+
+  void _procesarComandoVoz(AppState app, String texto) {
+    if (mounted) setState(() => _escuchando = false);
+    final normalizado = _sinAcentos(texto.toLowerCase());
+    if (normalizado.contains('salida')) {
+      _pulsarSalida(app);
+    } else if (normalizado.contains('entrada')) {
+      _pulsarEntrada(app);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            texto.isEmpty
+                ? 'No te escuché. Decí "marcar entrada" o "marcar salida"'
+                : 'No entendí "$texto". Decí "marcar entrada" o "marcar salida"',
+          ),
+        ),
+      );
+    }
+  }
+
+  String _sinAcentos(String s) => s
+      .replaceAll('á', 'a')
+      .replaceAll('é', 'e')
+      .replaceAll('í', 'i')
+      .replaceAll('ó', 'o')
+      .replaceAll('ú', 'u');
 
   Future<void> _alternarMonitor(AppState app) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -305,6 +367,8 @@ class _TarjetaMarcador extends StatelessWidget {
     required this.procesando,
     required this.onEntrada,
     required this.onSalida,
+    required this.escuchando,
+    required this.onVoz,
   });
 
   final WorkSession? activa;
@@ -313,6 +377,8 @@ class _TarjetaMarcador extends StatelessWidget {
   final bool procesando;
   final VoidCallback onEntrada;
   final VoidCallback onSalida;
+  final bool escuchando;
+  final VoidCallback onVoz;
 
   @override
   Widget build(BuildContext context) {
@@ -377,6 +443,13 @@ class _TarjetaMarcador extends StatelessWidget {
                       icon: const Icon(Icons.login, size: 26),
                       label: const Text('Marcar entrada', style: TextStyle(fontSize: 20)),
                     ),
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: procesando ? null : onVoz,
+              icon: Icon(escuchando ? Icons.mic : Icons.mic_none,
+                  color: escuchando ? scheme.error : null),
+              label: Text(escuchando ? 'Escuchando…' : 'Marcar por voz'),
             ),
           ],
         ),
