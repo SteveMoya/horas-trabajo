@@ -385,7 +385,7 @@ class _PaginaPerfil extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           StaggeredFadeIn(
             index: 4,
             child: TextField(

@@ -199,7 +199,7 @@ class _CardPerfil extends StatelessWidget {
                 prefixIcon: Icon(Icons.person),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
             TextField(
               controller: salario,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -512,7 +512,7 @@ class _CampoNumeroState extends State<_CampoNumero> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: TextField(
         controller: _ctrl,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),

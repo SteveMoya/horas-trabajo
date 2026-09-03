@@ -75,6 +75,9 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: scheme.surfaceContainerHighest.withValues(alpha: isDark ? 0.4 : 0.6),
+        // Más aire vertical entre el label flotante y el texto ingresado
+        // (el valor por defecto de Material deja ambos casi pegados).
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
