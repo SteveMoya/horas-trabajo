@@ -13,6 +13,7 @@ class Fmt {
   static final DateFormat _fechaLarga = DateFormat('EEEE, d \'de\' MMMM \'de\' yyyy', 'es');
   static final DateFormat _hora = DateFormat('hh:mm a', 'es');
   static final DateFormat _fechaExacta = DateFormat('d MMM yyyy, hh:mm a', 'es');
+  static final DateFormat _mesAnio = DateFormat('MMMM yyyy', 'es');
 
   /// Formatea un monto en pesos dominicanos (RD$1,234.50).
   static String moneda(double valor) => _moneda.format(valor);
@@ -24,6 +25,7 @@ class Fmt {
   static String fechaLarga(DateTime d) => _fechaLarga.format(d);
   static String horaCorta(DateTime d) => _hora.format(d);
   static String fechaExacta(DateTime d) => _fechaExacta.format(d);
+  static String mesAnio(DateTime d) => _mesAnio.format(d);
 
   static String duracion(Duration d) {
     final h = d.inHours;

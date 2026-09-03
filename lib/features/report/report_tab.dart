@@ -1,6 +1,8 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:horas_trabajo/core/utils/formatters.dart';
 import 'package:horas_trabajo/domain/salary/salary_engine.dart';
+import 'package:horas_trabajo/services/backup_service.dart';
 import 'package:horas_trabajo/state/app_state.dart';
 import 'package:provider/provider.dart';
 
@@ -15,6 +17,7 @@ class ReportTab extends StatefulWidget {
 
 class _ReportTabState extends State<ReportTab> {
   _Periodo _periodo = _Periodo.semana;
+  bool _exportando = false;
 
   (DateTime, DateTime) _rango(DateTime hoy) {
     if (_periodo == _Periodo.semana) {
@@ -31,6 +34,32 @@ class _ReportTabState extends State<ReportTab> {
     );
   }
 
+  String _tituloPeriodo(DateTime desde, DateTime hasta) {
+    if (_periodo == _Periodo.semana) {
+      final ultimoDia = hasta.subtract(const Duration(days: 1));
+      return 'Nómina semanal: ${Fmt.fechaCorta(desde)} - ${Fmt.fechaCorta(ultimoDia)}';
+    }
+    return 'Nómina mensual: ${Fmt.mesAnio(desde)}';
+  }
+
+  Future<void> _exportarPdf(PeriodPayReport report, DateTime desde, DateTime hasta) async {
+    if (_exportando) return;
+    setState(() => _exportando = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await BackupService().exportarPdf(
+        report,
+        titulo: _tituloPeriodo(desde, hasta),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('No se pudo exportar el PDF: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _exportando = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
@@ -39,7 +68,22 @@ class _ReportTabState extends State<ReportTab> {
     final report = app.motor.calcularRango(app.sesiones, desde: desde, hasta: hasta);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Reporte')),
+      appBar: AppBar(
+        title: const Text('Reporte'),
+        actions: [
+          IconButton(
+            tooltip: 'Exportar PDF',
+            icon: _exportando
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.picture_as_pdf_outlined),
+            onPressed: _exportando ? null : () => _exportarPdf(report, desde, hasta),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -61,6 +105,10 @@ class _ReportTabState extends State<ReportTab> {
           ),
           const SizedBox(height: 16),
           _TarjetaTotales(report: report),
+          const SizedBox(height: 16),
+          _TarjetaGraficoDias(sesiones: report.sesiones, desde: desde, hasta: hasta),
+          const SizedBox(height: 16),
+          _TarjetaGraficoCategorias(lineas: report.lineasConsolidadas),
           const SizedBox(height: 16),
           _TarjetaDesglose(lineas: report.lineasConsolidadas),
           const SizedBox(height: 16),
@@ -232,6 +280,214 @@ class _Fila extends StatelessWidget {
           Expanded(child: Text(titulo)),
           Text(valor, style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
+      ),
+    );
+  }
+}
+
+class _TarjetaGraficoDias extends StatelessWidget {
+  const _TarjetaGraficoDias({
+    required this.sesiones,
+    required this.desde,
+    required this.hasta,
+  });
+
+  final List<SessionPayReport> sesiones;
+  final DateTime desde;
+  final DateTime hasta;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final dias = hasta.difference(desde).inDays;
+    final horasPorDia = List<double>.filled(dias <= 0 ? 1 : dias, 0);
+    for (final s in sesiones) {
+      final idx = DateTime(s.sesion.inicio.year, s.sesion.inicio.month, s.sesion.inicio.day)
+          .difference(desde)
+          .inDays;
+      if (idx >= 0 && idx < horasPorDia.length) {
+        horasPorDia[idx] += s.totalHoras;
+      }
+    }
+    final maxHoras = horasPorDia.fold<double>(0, (a, h) => h > a ? h : a);
+    final sinActividad = maxHoras <= 0;
+    final barraAncha = horasPorDia.length <= 10;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Horas por día',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 160,
+              child: sinActividad
+                  ? Center(
+                      child: Text('Sin actividad en el período.',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              )),
+                    )
+                  : BarChart(
+                      BarChartData(
+                        maxY: maxHoras * 1.2,
+                        gridData: const FlGridData(show: false),
+                        borderData: FlBorderData(show: false),
+                        titlesData: FlTitlesData(
+                          topTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false)),
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 30,
+                              interval: maxHoras <= 0 ? 1 : null,
+                            ),
+                          ),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 24,
+                              getTitlesWidget: (value, meta) {
+                                final i = value.toInt();
+                                if (horasPorDia.length > 15 && i % 5 != 0) {
+                                  return const SizedBox.shrink();
+                                }
+                                final dia = desde.add(Duration(days: i));
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text('${dia.day}',
+                                      style: Theme.of(context).textTheme.bodySmall),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        barGroups: [
+                          for (var i = 0; i < horasPorDia.length; i++)
+                            BarChartGroupData(x: i, barRods: [
+                              BarChartRodData(
+                                toY: horasPorDia[i],
+                                color: scheme.primary,
+                                width: barraAncha ? 14 : 4,
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            ]),
+                        ],
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TarjetaGraficoCategorias extends StatelessWidget {
+  const _TarjetaGraficoCategorias({required this.lineas});
+
+  final List<PayLine> lineas;
+
+  static const _colores = [
+    Colors.blue,
+    Colors.teal,
+    Colors.deepOrange,
+    Colors.purple,
+    Colors.indigo,
+    Colors.brown,
+    Colors.pink,
+    Colors.green,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final totalHoras = lineas.fold<double>(0, (a, l) => a + l.horas);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Proporción por tipo de jornada',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 16),
+            if (lineas.isEmpty || totalHoras <= 0)
+              Text('Sin actividad en el período.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ))
+            else
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    height: 140,
+                    width: 140,
+                    child: PieChart(
+                      PieChartData(
+                        sectionsSpace: 2,
+                        centerSpaceRadius: 36,
+                        sections: [
+                          for (var i = 0; i < lineas.length; i++)
+                            PieChartSectionData(
+                              value: lineas[i].horas,
+                              color: _colores[i % _colores.length],
+                              showTitle: false,
+                              radius: 30,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (var i = 0; i < lineas.length; i++)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 3),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    color: _colores[i % _colores.length],
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    '${lineas[i].categoria.etiqueta} · '
+                                    '${(lineas[i].horas / totalHoras * 100).toStringAsFixed(0)}%',
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
       ),
     );
   }
