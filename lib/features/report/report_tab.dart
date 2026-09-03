@@ -1,6 +1,8 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:horas_trabajo/core/utils/formatters.dart';
+import 'package:horas_trabajo/core/widgets/animated_tap_scale.dart';
+import 'package:horas_trabajo/core/widgets/staggered_fade_in.dart';
 import 'package:horas_trabajo/domain/salary/salary_engine.dart';
 import 'package:horas_trabajo/services/backup_service.dart';
 import 'package:horas_trabajo/state/app_state.dart';
@@ -71,16 +73,18 @@ class _ReportTabState extends State<ReportTab> {
       appBar: AppBar(
         title: const Text('Reporte'),
         actions: [
-          IconButton(
-            tooltip: 'Exportar PDF',
-            icon: _exportando
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.picture_as_pdf_outlined),
-            onPressed: _exportando ? null : () => _exportarPdf(report, desde, hasta),
+          AnimatedTapScale(
+            child: IconButton(
+              tooltip: 'Exportar PDF',
+              icon: _exportando
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.picture_as_pdf_outlined),
+              onPressed: _exportando ? null : () => _exportarPdf(report, desde, hasta),
+            ),
           ),
         ],
       ),
@@ -104,15 +108,21 @@ class _ReportTabState extends State<ReportTab> {
             onSelectionChanged: (s) => setState(() => _periodo = s.first),
           ),
           const SizedBox(height: 16),
-          _TarjetaTotales(report: report),
+          StaggeredFadeIn(index: 0, child: _TarjetaTotales(report: report)),
           const SizedBox(height: 16),
-          _TarjetaGraficoDias(sesiones: report.sesiones, desde: desde, hasta: hasta),
+          StaggeredFadeIn(
+            index: 1,
+            child: _TarjetaGraficoDias(sesiones: report.sesiones, desde: desde, hasta: hasta),
+          ),
           const SizedBox(height: 16),
-          _TarjetaGraficoCategorias(lineas: report.lineasConsolidadas),
+          StaggeredFadeIn(
+            index: 2,
+            child: _TarjetaGraficoCategorias(lineas: report.lineasConsolidadas),
+          ),
           const SizedBox(height: 16),
-          _TarjetaDesglose(lineas: report.lineasConsolidadas),
+          StaggeredFadeIn(index: 3, child: _TarjetaDesglose(lineas: report.lineasConsolidadas)),
           const SizedBox(height: 16),
-          const _NotaLegal(),
+          const StaggeredFadeIn(index: 4, child: _NotaLegal()),
         ],
       ),
     );

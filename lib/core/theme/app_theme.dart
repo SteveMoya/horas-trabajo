@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:horas_trabajo/core/theme/pixel_shapes.dart';
 
 /// Paletas de color primario disponibles (Material 3 genera el resto).
 class ThemePalettes {
@@ -60,15 +61,15 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: scheme.surfaceContainerLow,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        // Esquinas continuas ("squircle") en vez del arco circular por
+        // defecto de Material — la seña visual de Material You / Pixel.
+        shape: const SquircleBorder(radius: PixelRadii.large),
         margin: EdgeInsets.zero,
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(54),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          shape: const SquircleBorder(radius: PixelRadii.medium),
           textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
@@ -79,17 +80,17 @@ class AppTheme {
         // (el valor por defecto de Material deja ambos casi pegados).
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(PixelRadii.small),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(PixelRadii.small),
           borderSide: BorderSide(color: scheme.primary, width: 1.5),
         ),
       ),
-      snackBarTheme: SnackBarThemeData(
+      snackBarTheme: const SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: SquircleBorder(radius: PixelRadii.small),
       ),
     );
   }

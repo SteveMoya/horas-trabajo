@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:horas_trabajo/core/utils/accessibility.dart';
 
 /// Envuelve [child] para que aparezca con un fade + leve desplazamiento
 /// hacia arriba cuando la pantalla se construye por primera vez. El
@@ -39,7 +40,9 @@ class _StaggeredFadeInState extends State<StaggeredFadeIn> {
   @override
   Widget build(BuildContext context) {
     final indice = widget.index.clamp(0, _maxIndiceEscalonado);
-    final duracion = Duration(milliseconds: 260 + 40 * indice);
+    final duracion = reducirMovimiento(context)
+        ? Duration.zero
+        : Duration(milliseconds: 260 + 40 * indice);
     return AnimatedOpacity(
       opacity: _visible ? 1 : 0,
       duration: duracion,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:horas_trabajo/core/utils/accessibility.dart';
 
 /// Envoltorio que aplica un pequeño "squish" (escala) al presionar, para dar
 /// feedback táctil inmediato en botones principales (además del ripple que
@@ -27,7 +28,7 @@ class _AnimatedTapScaleState extends State<AnimatedTapScale> {
       onPointerUp: (_) => _set(false),
       onPointerCancel: (_) => _set(false),
       child: AnimatedScale(
-        scale: _presionado ? widget.scale : 1.0,
+        scale: _presionado && !reducirMovimiento(context) ? widget.scale : 1.0,
         duration: const Duration(milliseconds: 100),
         curve: Curves.easeOut,
         child: widget.child,

@@ -1,5 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:horas_trabajo/core/widgets/animated_tap_scale.dart';
+import 'package:horas_trabajo/core/widgets/staggered_fade_in.dart';
 import 'package:horas_trabajo/services/backup_service.dart';
 import 'package:horas_trabajo/state/app_state.dart';
 import 'package:provider/provider.dart';
@@ -53,9 +55,11 @@ class _BackupScreenState extends State<BackupScreen> {
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Cancelar'),
           ),
-          FilledButton.tonal(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sí, reemplazar todo'),
+          AnimatedTapScale(
+            child: FilledButton.tonal(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Sí, reemplazar todo'),
+            ),
           ),
         ],
       ),
@@ -96,56 +100,65 @@ class _BackupScreenState extends State<BackupScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Icon(Icons.lock_outline,
-                      color: Theme.of(context).colorScheme.primary),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'Todo se guarda y comparte 100% desde tu dispositivo: '
-                      'no hay servidor ni cuenta en la nube de la app.',
+          StaggeredFadeIn(
+            index: 0,
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(Icons.lock_outline,
+                        color: Theme.of(context).colorScheme.primary),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Todo se guarda y comparte 100% desde tu dispositivo: '
+                        'no hay servidor ni cuenta en la nube de la app.',
+                      ),
                     ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          StaggeredFadeIn(
+            index: 1,
+            child: Card(
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.save_alt),
+                    title: const Text('Exportar copia de seguridad completa'),
+                    subtitle: const Text(
+                      'Perfil, reglas, lugar de trabajo e historial en un .json',
+                    ),
+                    onTap: _procesando ? null : _exportarJson,
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.table_chart_outlined),
+                    title: const Text('Exportar historial a CSV'),
+                    subtitle: const Text('Una fila por jornada, con el desglose de horas'),
+                    onTap: _procesando ? null : () => _exportarCsv(app),
                   ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 20),
-          Card(
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.save_alt),
-                  title: const Text('Exportar copia de seguridad completa'),
-                  subtitle: const Text(
-                    'Perfil, reglas, lugar de trabajo e historial en un .json',
-                  ),
-                  onTap: _procesando ? null : _exportarJson,
+          StaggeredFadeIn(
+            index: 2,
+            child: Card(
+              child: ListTile(
+                leading: Icon(Icons.restore,
+                    color: Theme.of(context).colorScheme.error),
+                title: const Text('Restaurar desde archivo'),
+                subtitle: const Text(
+                  'Reemplaza todos tus datos actuales por los de un .json exportado antes',
                 ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.table_chart_outlined),
-                  title: const Text('Exportar historial a CSV'),
-                  subtitle: const Text('Una fila por jornada, con el desglose de horas'),
-                  onTap: _procesando ? null : () => _exportarCsv(app),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          Card(
-            child: ListTile(
-              leading: Icon(Icons.restore,
-                  color: Theme.of(context).colorScheme.error),
-              title: const Text('Restaurar desde archivo'),
-              subtitle: const Text(
-                'Reemplaza todos tus datos actuales por los de un .json exportado antes',
+                onTap: _procesando ? null : () => _restaurar(app),
               ),
-              onTap: _procesando ? null : () => _restaurar(app),
             ),
           ),
           if (_procesando) ...[

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:horas_trabajo/core/utils/accessibility.dart';
 import 'package:horas_trabajo/core/utils/formatters.dart';
 import 'package:horas_trabajo/data/models/work_session.dart';
 import 'package:horas_trabajo/data/models/workplace.dart';
@@ -478,12 +479,15 @@ class _TarjetaMarcador extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            AnimatedTapScale(
-              scale: 0.92,
-              child: TextButton.icon(
-                onPressed: procesando ? null : onVoz,
-                icon: _IconoMicrofono(escuchando: escuchando, color: scheme.error),
-                label: Text(escuchando ? 'Escuchando…' : 'Marcar por voz'),
+            Semantics(
+              liveRegion: true,
+              child: AnimatedTapScale(
+                scale: 0.92,
+                child: TextButton.icon(
+                  onPressed: procesando ? null : onVoz,
+                  icon: _IconoMicrofono(escuchando: escuchando, color: scheme.error),
+                  label: Text(escuchando ? 'Escuchando…' : 'Marcar por voz'),
+                ),
               ),
             ),
           ],
@@ -515,13 +519,17 @@ class _IconoMicrofonoState extends State<_IconoMicrofono>
   @override
   void initState() {
     super.initState();
-    if (widget.escuchando) _controller.repeat(reverse: true);
+    if (widget.escuchando && !reducirMovimiento(context)) {
+      _controller.repeat(reverse: true);
+    }
   }
 
   @override
   void didUpdateWidget(_IconoMicrofono oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.escuchando && !oldWidget.escuchando) {
+    if (widget.escuchando &&
+        !oldWidget.escuchando &&
+        !reducirMovimiento(context)) {
       _controller.repeat(reverse: true);
     } else if (!widget.escuchando && oldWidget.escuchando) {
       _controller.stop();

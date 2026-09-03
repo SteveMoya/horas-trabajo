@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:horas_trabajo/core/utils/formatters.dart';
+import 'package:horas_trabajo/core/widgets/animated_tap_scale.dart';
+import 'package:horas_trabajo/core/widgets/staggered_fade_in.dart';
 import 'package:horas_trabajo/data/models/ausencia.dart';
 import 'package:horas_trabajo/data/repositories/ausencias_repository.dart';
 import 'package:horas_trabajo/domain/calendar/feriados_rd.dart';
@@ -56,10 +58,12 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Calendario')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _agregarAusencia,
-        icon: const Icon(Icons.add),
-        label: const Text('Agregar'),
+      floatingActionButton: AnimatedTapScale(
+        child: FloatingActionButton.extended(
+          onPressed: _agregarAusencia,
+          icon: const Icon(Icons.add),
+          label: const Text('Agregar'),
+        ),
       ),
       body: _cargando
           ? const Center(child: CircularProgressIndicator())
@@ -86,20 +90,23 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Card(
-                  child: Column(
-                    children: [
-                      for (final f in feriados)
-                        ListTile(
-                          leading: Icon(
-                            f.fecha.isBefore(DateTime(hoy.year, hoy.month, hoy.day))
-                                ? Icons.event_available_outlined
-                                : Icons.event_outlined,
+                StaggeredFadeIn(
+                  index: 0,
+                  child: Card(
+                    child: Column(
+                      children: [
+                        for (final f in feriados)
+                          ListTile(
+                            leading: Icon(
+                              f.fecha.isBefore(DateTime(hoy.year, hoy.month, hoy.day))
+                                  ? Icons.event_available_outlined
+                                  : Icons.event_outlined,
+                            ),
+                            title: Text(f.nombre),
+                            trailing: Text(Fmt.fechaCorta(f.fecha)),
                           ),
-                          title: Text(f.nombre),
-                          trailing: Text(Fmt.fechaCorta(f.fecha)),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -117,25 +124,28 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
                         ),
                   )
                 else
-                  Card(
-                    child: Column(
-                      children: [
-                        for (final a in _ausencias)
-                          ListTile(
-                            leading: const Icon(Icons.beach_access_outlined),
-                            title: Text(a.tipo.etiqueta),
-                            subtitle: Text(
-                              '${Fmt.fechaCorta(a.fechaInicio)} - ${Fmt.fechaCorta(a.fechaFin)}'
-                              '${a.nota.isNotEmpty ? '\n${a.nota}' : ''}',
+                  StaggeredFadeIn(
+                    index: 1,
+                    child: Card(
+                      child: Column(
+                        children: [
+                          for (final a in _ausencias)
+                            ListTile(
+                              leading: const Icon(Icons.beach_access_outlined),
+                              title: Text(a.tipo.etiqueta),
+                              subtitle: Text(
+                                '${Fmt.fechaCorta(a.fechaInicio)} - ${Fmt.fechaCorta(a.fechaFin)}'
+                                '${a.nota.isNotEmpty ? '\n${a.nota}' : ''}',
+                              ),
+                              isThreeLine: a.nota.isNotEmpty,
+                              trailing: IconButton(
+                                icon: const Icon(Icons.delete_outline),
+                                tooltip: 'Eliminar',
+                                onPressed: () => _eliminarAusencia(a.id),
+                              ),
                             ),
-                            isThreeLine: a.nota.isNotEmpty,
-                            trailing: IconButton(
-                              icon: const Icon(Icons.delete_outline),
-                              tooltip: 'Eliminar',
-                              onPressed: () => _eliminarAusencia(a.id),
-                            ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
               ],

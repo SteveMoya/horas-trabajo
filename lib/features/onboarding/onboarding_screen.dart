@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:horas_trabajo/core/navigation/fade_through_route.dart';
+import 'package:horas_trabajo/core/theme/pixel_shapes.dart';
 import 'package:horas_trabajo/core/widgets/animated_tap_scale.dart';
+import 'package:horas_trabajo/core/widgets/morphing_blob.dart';
 import 'package:horas_trabajo/core/widgets/staggered_fade_in.dart';
 import 'package:horas_trabajo/data/models/employee_profile.dart';
 import 'package:horas_trabajo/features/root/root_screen.dart';
@@ -127,6 +129,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Row(
                   children: [
                     IconButton(
+                      tooltip: 'Atrás',
                       onPressed: _pagina > 0 ? _atras : null,
                       icon: const Icon(Icons.arrow_back),
                     ),
@@ -233,22 +236,28 @@ class _PuntosProgreso extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        for (var i = 0; i < total; i++)
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOut,
-            margin: const EdgeInsets.symmetric(horizontal: 3),
-            height: 8,
-            width: i == actual ? 24 : 8,
-            decoration: BoxDecoration(
-              color: i == actual ? scheme.primary : scheme.outlineVariant,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-      ],
+    return Semantics(
+      label: 'Página ${actual + 1} de $total',
+      liveRegion: true,
+      child: ExcludeSemantics(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            for (var i = 0; i < total; i++)
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOut,
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                height: 8,
+                width: i == actual ? 24 : 8,
+                decoration: BoxDecoration(
+                  color: i == actual ? scheme.primary : scheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -275,24 +284,20 @@ class _PaginaIntro extends StatelessWidget {
         children: [
           StaggeredFadeIn(
             index: 0,
-            child: icono == null
-                ? ClipOval(
-                    child: Image.asset(
-                      'assets/logo.png',
-                      height: 120,
-                      width: 120,
-                      fit: BoxFit.cover,
-                    ),
-                  )
-                : Container(
-                    height: 120,
-                    width: 120,
-                    decoration: BoxDecoration(
-                      color: scheme.primaryContainer,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icono, size: 56, color: scheme.onPrimaryContainer),
-                  ),
+            child: MorphingBlob(
+              size: 130,
+              color: scheme.primaryContainer,
+              child: icono == null
+                  ? ClipOval(
+                      child: Image.asset(
+                        'assets/logo.png',
+                        height: 76,
+                        width: 76,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : Icon(icono, size: 56, color: scheme.onPrimaryContainer),
+            ),
           ),
           const SizedBox(height: 32),
           StaggeredFadeIn(
@@ -339,13 +344,9 @@ class _PaginaPerfil extends StatelessWidget {
         children: [
           StaggeredFadeIn(
             index: 0,
-            child: Container(
-              height: 96,
-              width: 96,
-              decoration: BoxDecoration(
-                color: scheme.primaryContainer,
-                shape: BoxShape.circle,
-              ),
+            child: MorphingBlob(
+              size: 104,
+              color: scheme.primaryContainer,
               child: Icon(Icons.badge_outlined, size: 44, color: scheme.onPrimaryContainer),
             ),
           ),
@@ -426,13 +427,11 @@ class _PaginaUbicacion extends StatelessWidget {
         children: [
           StaggeredFadeIn(
             index: 0,
-            child: Container(
-              height: 96,
-              width: 96,
-              decoration: BoxDecoration(
-                color: scheme.primaryContainer,
-                shape: BoxShape.circle,
-              ),
+            child: MorphingBlob(
+              size: 104,
+              color: scheme.primaryContainer,
+              blobA: PixelBlobs.media,
+              blobB: PixelBlobs.marcada,
               child: Icon(Icons.my_location, size: 44, color: scheme.onPrimaryContainer),
             ),
           ),
@@ -507,47 +506,54 @@ class _TarjetaOpcion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: seleccionada ? scheme.primaryContainer : scheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: seleccionada ? scheme.primary : scheme.outlineVariant,
-            width: seleccionada ? 2 : 1,
+    return Semantics(
+      button: true,
+      selected: seleccionada,
+      label: '$titulo. $subtitulo',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(PixelRadii.medium),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: seleccionada ? scheme.primaryContainer : scheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(PixelRadii.medium),
+            border: Border.all(
+              color: seleccionada ? scheme.primary : scheme.outlineVariant,
+              width: seleccionada ? 2 : 1,
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            Icon(icono, color: seleccionada ? scheme.primary : scheme.onSurfaceVariant),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(titulo, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitulo,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
+          child: ExcludeSemantics(
+            child: Row(
+              children: [
+                Icon(icono, color: seleccionada ? scheme.primary : scheme.onSurfaceVariant),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(titulo, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitulo,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 150),
+                  child: seleccionada
+                      ? Icon(Icons.check_circle, key: const ValueKey(true), color: scheme.primary)
+                      : const SizedBox(key: ValueKey(false), width: 24),
+                ),
+              ],
             ),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 150),
-              child: seleccionada
-                  ? Icon(Icons.check_circle, key: const ValueKey(true), color: scheme.primary)
-                  : const SizedBox(key: ValueKey(false), width: 24),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -567,10 +573,12 @@ class _PaginaFinal extends StatelessWidget {
         children: [
           StaggeredFadeIn(
             index: 0,
-            child: Container(
-              height: 120,
-              width: 120,
-              decoration: BoxDecoration(color: scheme.tertiaryContainer, shape: BoxShape.circle),
+            child: MorphingBlob(
+              size: 130,
+              color: scheme.tertiaryContainer,
+              blobA: PixelBlobs.suave,
+              blobB: PixelBlobs.marcada,
+              duracion: const Duration(seconds: 3),
               child: Icon(Icons.check_circle, size: 64, color: scheme.onTertiaryContainer),
             ),
           ),
