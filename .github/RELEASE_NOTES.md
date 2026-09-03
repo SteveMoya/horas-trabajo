@@ -1,6 +1,16 @@
-# Horas Trabajo RD — Beta v0.6.1
+# Horas Trabajo RD — Beta v0.6.2
 
-## Consistencia visual y feedback táctil
+## Corrección: no se podía guardar el lugar de trabajo
+
+- **Bug arreglado**: guardar el lugar de trabajo solo era posible como
+  efecto colateral de marcar la primera entrada con GPS activo. Si
+  declinabas ese diálogo, el GPS fallaba, o tenías activo el modo sin
+  GPS, no quedaba ninguna forma de configurarlo — y sin lugar de
+  trabajo guardado, la vigilancia de llegada y salida no se podía
+  activar. Ahora la fila "Sin lugar de trabajo" (tarjeta Trabajo, en
+  Inicio) guarda tu ubicación actual al tocarla.
+
+## v0.6.1 — Consistencia visual y feedback táctil
 
 - **Formas Pixel en toda la app**: las esquinas continuas ("squircle",
   la seña visual de Material You / Pixel) que ya tenían las tarjetas y
