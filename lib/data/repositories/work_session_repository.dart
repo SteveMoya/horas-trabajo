@@ -40,7 +40,12 @@ class WorkSessionRepository {
 
   Future<WorkSession> insertar(WorkSession sesion) async {
     final db = await _database.database;
-    final id = await db.insert('sesiones', sesion.toMap());
+    // El 'id' se pasa siempre como 0 desde WorkSession(id: 0, ...); si se
+    // inserta literal, la segunda sesión de la vida de la base choca contra
+    // la primera (PRIMARY KEY duplicada) y la excepción deja `_procesando`
+    // trabado en AppState. Se omite para que SQLite autoincremente.
+    final map = sesion.toMap()..remove('id');
+    final id = await db.insert('sesiones', map);
     return sesion.copyWith(id: id);
   }
 
