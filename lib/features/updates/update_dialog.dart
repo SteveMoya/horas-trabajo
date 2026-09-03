@@ -14,6 +14,7 @@ class UpdateDialog extends StatefulWidget {
 
 class _UpdateDialogState extends State<UpdateDialog> {
   bool _descargando = false;
+  bool _permisoFalta = false;
   int _descargados = 0;
   int _total = 0;
   String? _error;
@@ -32,6 +33,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
     setState(() {
       _descargando = true;
       _error = null;
+      _permisoFalta = false;
       _descargados = 0;
       _total = _info.apkSizeBytes;
     });
@@ -48,15 +50,27 @@ class _UpdateDialogState extends State<UpdateDialog> {
         },
       );
       if (!mounted) return;
-      final error = await UpdateService.instance.instalar(ruta);
+      final resumen = await UpdateService.instance.instalar(ruta);
       if (!mounted) return;
-      if (error != null) {
-        setState(() {
-          _descargando = false;
-          _error = 'No se pudo abrir el instalador: $error';
-        });
-      } else {
-        Navigator.of(context).pop();
+      switch (resumen.resultado) {
+        case InstalacionResultado.exito:
+          // El instalador del sistema ya está abierto sobre la app.
+          Navigator.of(context).pop();
+          break;
+        case InstalacionResultado.permisoRequerido:
+          setState(() {
+            _descargando = false;
+            _permisoFalta = true;
+            _error = resumen.mensaje;
+          });
+          break;
+        case InstalacionResultado.error:
+          setState(() {
+            _descargando = false;
+            _error = 'No se pudo abrir el instalador: '
+                '${resumen.mensaje ?? 'error desconocido'}';
+          });
+          break;
       }
     } catch (e) {
       if (mounted) {
@@ -66,6 +80,16 @@ class _UpdateDialogState extends State<UpdateDialog> {
         });
       }
     }
+  }
+
+  Future<void> _permitirInstalacion() async {
+    await UpdateService.abrirAjustesInstalacion();
+    if (!mounted) return;
+    setState(() {
+      _permisoFalta = false;
+      _error = 'Cuando permitas la instalación en los ajustes, vuelve y toca '
+          '"Actualizar ahora" (el archivo ya está descargado).';
+    });
   }
 
   @override
@@ -107,6 +131,19 @@ class _UpdateDialogState extends State<UpdateDialog> {
                   style: theme.textTheme.bodySmall),
             ),
           ],
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: scheme.errorContainer.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(_error!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                      color: scheme.onErrorContainer)),
+            ),
+          ],
         ],
       );
     } else {
@@ -143,6 +180,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
     }
 
     return AlertDialog(
+      scrollable: true,
       icon: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(color: scheme.primaryContainer, shape: BoxShape.circle),
@@ -157,14 +195,21 @@ class _UpdateDialogState extends State<UpdateDialog> {
         if (_descargando)
           const TextButton(onPressed: null, child: Text('Espera…'))
         else ...[
+          if (_permisoFalta)
+            FilledButton.icon(
+              onPressed: _permitirInstalacion,
+              icon: const Icon(Icons.settings, size: 20),
+              label: const Text('Permitir instalación'),
+            )
+          else
+            FilledButton.icon(
+              onPressed: _actualizar,
+              icon: const Icon(Icons.download_done, size: 20),
+              label: const Text('Actualizar ahora'),
+            ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Más tarde'),
-          ),
-          FilledButton.icon(
-            onPressed: _actualizar,
-            icon: const Icon(Icons.download_done, size: 20),
-            label: const Text('Actualizar ahora'),
           ),
         ],
       ],

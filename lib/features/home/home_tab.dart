@@ -112,7 +112,6 @@ class _HomeTabState extends State<HomeTab> {
               index: 1,
               child: _TarjetaMarcador(
                 activa: activa,
-                ahora: _ahora,
                 duraActiva: activa == null
                     ? Duration.zero
                     : _ahora.difference(activa.inicio),
@@ -424,7 +423,6 @@ class _HomeTabState extends State<HomeTab> {
 class _TarjetaMarcador extends StatelessWidget {
   const _TarjetaMarcador({
     required this.activa,
-    required this.ahora,
     required this.duraActiva,
     required this.jornada,
     required this.esNocturno,
@@ -436,7 +434,6 @@ class _TarjetaMarcador extends StatelessWidget {
   });
 
   final WorkSession? activa;
-  final DateTime ahora;
   final Duration duraActiva;
   final Duration jornada;
   final bool esNocturno;
@@ -465,15 +462,6 @@ class _TarjetaMarcador extends StatelessWidget {
               ),
               const SizedBox(height: 18),
             ],
-            Text(
-              Fmt.horaCorta(ahora),
-              style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: scheme.primary,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-            ),
-            const SizedBox(height: 4),
             Text(
               enCurso ? 'Sesión en curso' : 'Fuera de la jornada',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -173,11 +175,80 @@ class UpdateService {
     return archivo.path;
   }
 
+  /// Resultado del intento de abrir el instalador del APK.
+  static const _canal = MethodChannel('horas_trabajo/instalador');
+
   /// Abre el instalador de paquetes con el APK [ruta] para instalar la
-  /// actualización. Devuelve un mensaje de error amigable si falla.
-  Future<String?> instalar(String ruta) async {
+  /// actualización. En Android usa el canal nativo propio, que además detecta
+  /// si falta el permiso de "Instalar apps desconocidas" (causa habitual de
+  /// que la instalación no arranque sin avisar) y cae a `open_filex` si el
+  /// canal no está disponible (p. ej. iOS).
+  Future<InstalacionResumen> instalar(String ruta) async {
+    if (!kIsWeb && Platform.isAndroid) {
+      try {
+        final res = await _canal.invokeMethod<String>('instalar', {'ruta': ruta});
+        switch (res) {
+          case 'ok':
+            return const InstalacionResumen(InstalacionResultado.exito);
+          case 'permiso':
+            return const InstalacionResumen(
+              InstalacionResultado.permisoRequerido,
+              'Permite instalar apps de este origen para poder actualizar. '
+                  'Toca "Permitir instalación" para abrir los ajustes.',
+            );
+          case null:
+            return const InstalacionResumen(
+              InstalacionResultado.error, 'El instalador no respondió.');
+          default:
+            final detalle = res.startsWith('error:')
+                ? res.substring('error:'.length)
+                : res;
+            return InstalacionResumen(InstalacionResultado.error, detalle);
+        }
+      } catch (_) {
+        // Canal no disponible (p. ej. build muy antiguo): fallback.
+        return _instalarConOpenFilex(ruta);
+      }
+    }
+    return _instalarConOpenFilex(ruta);
+  }
+
+  Future<InstalacionResumen> _instalarConOpenFilex(String ruta) async {
     final res = await OpenFilex.open(
         ruta, type: 'application/vnd.android.package-archive');
-    return res.type == ResultType.done ? null : res.message;
+    if (res.type == ResultType.done) {
+      return const InstalacionResumen(InstalacionResultado.exito);
+    }
+    return InstalacionResumen(InstalacionResultado.error, res.message);
   }
+
+  /// ¿Está permitido instalar apps de este origen en Android (8+)?
+  static Future<bool> puedeInstalar() async {
+    if (!kIsWeb && Platform.isAndroid) {
+      try {
+        return await _canal.invokeMethod<bool>('puedeInstalar') ?? true;
+      } catch (_) {
+        return true;
+      }
+    }
+    return true;
+  }
+
+  /// Abre los ajustes de "Instalar apps desconocidas" de la app.
+  static Future<void> abrirAjustesInstalacion() async {
+    if (!kIsWeb && Platform.isAndroid) {
+      try {
+        await _canal.invokeMethod('abrirAjustesInstalacion');
+      } catch (_) {/* sin ajustes accesibles */}
+    }
+  }
+}
+
+/// Resultado de intentar abrir el instalador del APK.
+enum InstalacionResultado { exito, error, permisoRequerido }
+
+class InstalacionResumen {
+  const InstalacionResumen(this.resultado, [this.mensaje]);
+  final InstalacionResultado resultado;
+  final String? mensaje;
 }

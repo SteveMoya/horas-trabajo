@@ -1,6 +1,23 @@
-# Horas Trabajo RD — Beta v0.7.2
+# Horas Trabajo RD — Beta v0.7.3
 
-## Aviso de actualización más fiable 🚀
+## Instalación de la actualización corregida 🛠️
+
+- La descarga terminaba pero la **instalación podía no arrancar** sin avisar.
+  Ahora:
+  - Se detecta el permiso de **"Instalar apps desconocidas"** de Android. Si no
+    está concedido, se explica y se ofrece un botón **"Permitir instalación"**
+    que abre directamente los ajustes.
+  - Se instaló un instalador nativo propio (FileProvider + PackageInstaller),
+    más fiable que el genérico.
+  - Los errores de instalación ya **se muestran** en el diálogo (antes quedaban
+    ocultos y parecía que "no pasaba nada").
+
+## Inicio sin hora duplicada
+
+- Se quita la **hora actual** de la tarjeta principal: los datos de tiempo ya
+  viven en el **cronómetro circular**, y la pantalla queda más limpia.
+
+## v0.7.2 — Aviso de actualización más fiable 🚀
 
 - La app ahora **revisa si hay versión nueva también cada vez que vuelves a
   primer plano** (minimizarla y reabrirla), no solo al arrancar desde cero.
