@@ -71,6 +71,29 @@ class AppState extends ChangeNotifier {
 
   bool get perfilCompleto => _perfil.perfilCompleto;
 
+  /// [SOLO TEST/REVISIONES] Inyecta estado de demostración sin tocar la base
+  /// de datos. Útil para capturas (golden) y previsualización de la UI.
+  @visibleForTesting
+  void inyectarEstadoDemo({
+    EmployeeProfile perfil = const EmployeeProfile(),
+    List<WorkSession> sesiones = const [],
+    WorkSession? activa,
+    Workplace? workplace,
+    bool monitoreando = false,
+    bool dentro = false,
+  }) {
+    _perfil = perfil;
+    _reglas = const RdPayRules();
+    _sesiones = List.of(sesiones);
+    _activa = activa;
+    _workplace = workplace;
+    _monitoreando = monitoreando;
+    _dentro = dentro;
+    _cargando = false;
+    _procesando = false;
+    notifyListeners();
+  }
+
   Future<void> cargar() async {
     _cargando = true;
     notifyListeners();
