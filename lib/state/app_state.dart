@@ -224,6 +224,14 @@ class AppState extends ChangeNotifier {
         return MonitoreoResultado.notificacionesDenegadas;
       }
 
+      // El canal debe existir ANTES de arrancar el servicio: si no,
+      // startForeground() falla con CannotPostForegroundServiceNotificationException
+      // y el sistema mata la app (main.dart lo crea de forma asíncrona al
+      // arrancar, pero no hay garantía de que ya haya terminado aquí).
+      try {
+        await NotificationsService.crearCanalGeofence();
+      } catch (_) {/* se reintenta igual al arrancar el servicio */}
+
       try {
         await backgroundService.startService();
       } catch (e) {

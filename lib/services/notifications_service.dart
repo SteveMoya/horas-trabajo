@@ -56,8 +56,32 @@ class NotificationsService {
       },
     );
 
+    // El foreground service (background_service.dart) publica su notificación
+    // persistente en este mismo canal sin crearlo él mismo; si no existe
+    // todavía, Android rechaza el startForeground() con
+    // CannotPostForegroundServiceNotificationException y mata la app.
+    await crearCanalGeofence();
+
     // Permiso de notificaciones (Android 13+).
     await requestPermission();
+  }
+
+  /// Crea (si no existe) el canal de notificaciones usado tanto para los
+  /// avisos de geocerca como para la notificación persistente del
+  /// foreground service de vigilancia.
+  static Future<void> crearCanalGeofence() async {
+    const canal = AndroidNotificationChannel(
+      channelId,
+      'Geocerca del trabajo',
+      description: 'Avisos al llegar o salir del lugar de trabajo',
+      importance: Importance.high,
+    );
+    try {
+      await plugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(canal);
+    } catch (_) {/* dispositivo sin soporte */}
   }
 
   Future<void> requestPermission() async {
