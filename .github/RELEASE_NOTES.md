@@ -1,6 +1,18 @@
-# Horas Trabajo RD — Beta v0.5.0
+# Horas Trabajo RD — Beta v0.6.0
 
-## 7 features nuevas
+## Bienvenida y experiencia pulida
+
+- **Onboarding inicial**: la primera vez que abres la app, un recorrido de
+  bienvenida presenta las funciones principales y recoge tu nombre, salario
+  mensual y preferencia de GPS — así el cálculo de nómina funciona desde tu
+  primera jornada marcada. Se muestra una única vez.
+- **Micro-animaciones** en toda la app: los botones dan feedback de escala al
+  presionarlos, las tarjetas del Inicio y el Historial aparecen con un
+  fundido escalonado, el ícono del micrófono pulsa mientras escucha, y el
+  cambio entre pestañas y pantallas usa transiciones suaves (crossfade y
+  "fade through") en vez de saltos secos.
+
+## 7 features nuevas (v0.5.0)
 
 ### Marcado
 - **Modo sin GPS**: toggle en Ajustes para marcar entrada/salida 100% manual,
