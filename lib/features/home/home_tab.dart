@@ -58,7 +58,14 @@ class _HomeTabState extends State<HomeTab> {
         leading: Padding(
           padding: const EdgeInsets.only(left: 12, right: 4),
           child: Center(
-            child: Image.asset('assets/logo.png', height: 30),
+            child: ClipOval(
+              child: Image.asset(
+                'assets/logo.png',
+                height: 32,
+                width: 32,
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
         ),
         title: const Text('Marcar Horas'),
