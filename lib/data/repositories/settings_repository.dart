@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class SettingsRepository {
   static const _kPerfil = 'perfil';
   static const _kReglas = 'reglas';
+  static const _kUsarUbicacion = 'usar_ubicacion';
 
   Future<EmployeeProfile> cargarPerfil() async {
     final prefs = await SharedPreferences.getInstance();
@@ -41,5 +42,18 @@ class SettingsRepository {
   Future<void> guardarReglas(RdPayRules reglas) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kReglas, jsonEncode(reglas.toJson()));
+  }
+
+  /// Si es `false`, la app nunca pide permiso de ubicación ni GPS al marcar
+  /// entrada/salida (modo 100% manual). Por defecto `true` para no cambiar
+  /// el comportamiento existente.
+  Future<bool> cargarUsarUbicacion() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_kUsarUbicacion) ?? true;
+  }
+
+  Future<void> guardarUsarUbicacion(bool valor) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kUsarUbicacion, valor);
   }
 }

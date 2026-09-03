@@ -18,6 +18,7 @@ class _SettingsTabState extends State<SettingsTab> {
   TextEditingController? _nombre;
   TextEditingController? _salario;
   RdPayRules _reglas = const RdPayRules();
+  bool _usarUbicacion = true;
 
   @override
   void didChangeDependencies() {
@@ -30,6 +31,7 @@ class _SettingsTabState extends State<SettingsTab> {
           : '',
     );
     _reglas = app.reglas;
+    _usarUbicacion = app.usarUbicacion;
   }
 
   @override
@@ -52,6 +54,12 @@ class _SettingsTabState extends State<SettingsTab> {
             nombre: _nombre!,
             salario: _salario!,
             onGuardar: () => _guardarPerfil(app),
+          ),
+          const SizedBox(height: 24),
+          const _SeccionTitulo('Ubicación'),
+          _CardUbicacion(
+            usarUbicacion: _usarUbicacion,
+            onChanged: _setUsarUbicacion,
           ),
           const SizedBox(height: 24),
           const _SeccionTitulo('Apariencia'),
@@ -90,6 +98,11 @@ class _SettingsTabState extends State<SettingsTab> {
   Future<void> _setReglas(RdPayRules reglas) async {
     setState(() => _reglas = reglas);
     await context.read<AppState>().guardarReglas(reglas);
+  }
+
+  Future<void> _setUsarUbicacion(bool valor) async {
+    setState(() => _usarUbicacion = valor);
+    await context.read<AppState>().guardarUsarUbicacion(valor);
   }
 }
 
@@ -157,6 +170,33 @@ class _CardPerfil extends StatelessWidget {
                   onPressed: onGuardar, child: const Text('Guardar perfil')),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CardUbicacion extends StatelessWidget {
+  const _CardUbicacion({required this.usarUbicacion, required this.onChanged});
+
+  final bool usarUbicacion;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: SwitchListTile(
+        value: usarUbicacion,
+        onChanged: onChanged,
+        title: const Text('Usar GPS al marcar'),
+        subtitle: Text(
+          usarUbicacion
+              ? 'Se pide ubicación al marcar entrada y se puede vigilar geocerca'
+              : 'Modo 100% manual: no se pide GPS ni permisos. '
+                  'La vigilancia de llegada/salida queda desactivada.',
+        ),
+        secondary: Icon(
+          usarUbicacion ? Icons.location_on : Icons.location_off,
         ),
       ),
     );

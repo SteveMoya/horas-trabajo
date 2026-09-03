@@ -64,6 +64,7 @@ class AppState extends ChangeNotifier {
   bool _dentro = false;
   bool _cargando = true;
   bool _procesando = false;
+  bool _usarUbicacion = true;
   Timer? _tick;
 
   EmployeeProfile get perfil => _perfil;
@@ -75,6 +76,7 @@ class AppState extends ChangeNotifier {
   bool get dentro => _dentro;
   bool get cargando => _cargando;
   bool get procesando => _procesando;
+  bool get usarUbicacion => _usarUbicacion;
 
   SalaryEngine get motor =>
       SalaryEngine(salarioMensual: _perfil.salarioMensual, reglas: _reglas);
@@ -91,6 +93,7 @@ class AppState extends ChangeNotifier {
     Workplace? workplace,
     bool monitoreando = false,
     bool dentro = false,
+    bool usarUbicacion = true,
   }) {
     _perfil = perfil;
     _reglas = const RdPayRules();
@@ -99,6 +102,7 @@ class AppState extends ChangeNotifier {
     _workplace = workplace;
     _monitoreando = monitoreando;
     _dentro = dentro;
+    _usarUbicacion = usarUbicacion;
     _cargando = false;
     _procesando = false;
     notifyListeners();
@@ -114,6 +118,7 @@ class AppState extends ChangeNotifier {
       _sessions.obtenerEnProgreso(),
       _workplaceRepo.getWorkplace(),
       _workplaceRepo.getInside(),
+      _settings.cargarUsarUbicacion(),
     ]);
     _perfil = resultados[0] as EmployeeProfile;
     _reglas = resultados[1] as RdPayRules;
@@ -121,6 +126,7 @@ class AppState extends ChangeNotifier {
     _activa = resultados[3] as WorkSession?;
     _workplace = resultados[4] as Workplace?;
     _dentro = resultados[5] as bool? ?? false;
+    _usarUbicacion = resultados[6] as bool? ?? true;
     _cargando = false;
 
     _tick?.cancel();
@@ -141,6 +147,16 @@ class AppState extends ChangeNotifier {
     _reglas = reglas;
     notifyListeners();
     await _settings.guardarReglas(reglas);
+  }
+
+  /// Activa/desactiva el modo 100% manual (sin GPS ni permiso de ubicación).
+  /// Al desactivar el uso de ubicación se apaga también la vigilancia de
+  /// geocerca, ya que depende de la posición del dispositivo.
+  Future<void> guardarUsarUbicacion(bool valor) async {
+    _usarUbicacion = valor;
+    if (!valor && _monitoreando) await desactivarMonitor();
+    notifyListeners();
+    await _settings.guardarUsarUbicacion(valor);
   }
 
   // ---------------- Lugar de trabajo y geocerca ----------------

@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:horas_trabajo/core/utils/formatters.dart';
 import 'package:horas_trabajo/data/models/work_session.dart';
 import 'package:horas_trabajo/data/models/workplace.dart';
+import 'package:horas_trabajo/domain/salary/salary_engine.dart';
 import 'package:horas_trabajo/state/app_state.dart';
 import 'package:provider/provider.dart';
 
@@ -98,6 +99,16 @@ class _HomeTabState extends State<HomeTab> {
               onEntrada: () => _pulsarEntrada(app),
               onSalida: () => _pulsarSalida(app),
             ),
+            if (activa != null) ...[
+              const SizedBox(height: 16),
+              _TarjetaIngresoEnVivo(
+                reporte: app.perfil.salarioMensual > 0
+                    ? app.motor.calcularSesionUnica(
+                        activa.copyWith(fin: _ahora),
+                      )
+                    : null,
+              ),
+            ],
             const SizedBox(height: 16),
             _TarjetaTrabajo(
               app: app,
@@ -124,8 +135,8 @@ class _HomeTabState extends State<HomeTab> {
     if (app.activa != null) return;
     final messenger = ScaffoldMessenger.of(context);
 
-    // Pide permiso de GPS y captura la ubicación.
-    final gps = await app.pedirUbicacion();
+    // Modo sin GPS: no se pide permiso ni ubicación, se marca directo.
+    final gps = app.usarUbicacion ? await app.pedirUbicacion() : null;
 
     // Primera vez: ofrecer guardar como lugar de trabajo.
     if (gps != null && app.workplace == null && mounted) {
@@ -343,6 +354,91 @@ class _TarjetaMarcador extends StatelessWidget {
   }
 }
 
+class _TarjetaIngresoEnVivo extends StatelessWidget {
+  const _TarjetaIngresoEnVivo({required this.reporte});
+
+  /// `null` cuando el perfil aún no tiene salario mensual configurado.
+  final SessionPayReport? reporte;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final reporte = this.reporte;
+    return Card(
+      color: scheme.primaryContainer.withValues(alpha: 0.35),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.trending_up, color: scheme.primary),
+                const SizedBox(width: 8),
+                Text('Ganado en esta jornada',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        )),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (reporte == null)
+              Text(
+                'Completa tu salario mensual en Ajustes para ver el ingreso en vivo.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+              )
+            else ...[
+              Text(
+                Fmt.moneda(reporte.importeTotal),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: scheme.primary,
+                    ),
+              ),
+              if (reporte.lineas.isNotEmpty) ...[
+                const Divider(height: 24),
+                for (final l in reporte.lineas) _FilaIngreso(linea: l),
+              ],
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FilaIngreso extends StatelessWidget {
+  const _FilaIngreso({required this.linea});
+
+  final PayLine linea;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              '${linea.categoria.etiqueta} · ${Fmt.horas(linea.horas)}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          Text(
+            Fmt.moneda(linea.importe),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _TarjetaTrabajo extends StatelessWidget {
   const _TarjetaTrabajo({
     required this.app,
@@ -366,12 +462,14 @@ class _TarjetaTrabajo extends StatelessWidget {
           children: [
             SwitchListTile(
               value: app.monitoreando,
-              onChanged: (_) => onToggleMonitoreo(),
+              onChanged: app.usarUbicacion ? (_) => onToggleMonitoreo() : null,
               title: const Text('Vigilar llegada y salida'),
               subtitle: Text(
-                app.monitoreando
-                    ? 'Avisos al llegar/salir del trabajo'
-                    : 'Notificaciones de geocerca',
+                !app.usarUbicacion
+                    ? 'Desactivada: modo sin GPS activo (Ajustes)'
+                    : app.monitoreando
+                        ? 'Avisos al llegar/salir del trabajo'
+                        : 'Notificaciones de geocerca',
               ),
               secondary: Icon(
                 app.monitoreando ? Icons.gps_fixed : Icons.gps_not_fixed,
