@@ -10,6 +10,7 @@ import 'package:horas_trabajo/domain/calendar/feriados_rd.dart';
 import 'package:horas_trabajo/core/widgets/animated_tap_scale.dart';
 import 'package:horas_trabajo/core/widgets/staggered_fade_in.dart';
 import 'package:horas_trabajo/domain/salary/salary_engine.dart';
+import 'package:horas_trabajo/features/home/jornada_timer_ring.dart';
 import 'package:horas_trabajo/state/app_state.dart';
 import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -106,6 +107,8 @@ class _HomeTabState extends State<HomeTab> {
                 duraActiva: activa == null
                     ? Duration.zero
                     : _ahora.difference(activa.inicio),
+                jornada: Duration(hours: app.reglas.ordinariaDiaHoras),
+                esNocturno: app.reglas.esHoraNocturna(_ahora.hour),
                 procesando: app.procesando,
                 onEntrada: () => _pulsarEntrada(app),
                 onSalida: () => _pulsarSalida(app),
@@ -414,6 +417,8 @@ class _TarjetaMarcador extends StatelessWidget {
     required this.activa,
     required this.ahora,
     required this.duraActiva,
+    required this.jornada,
+    required this.esNocturno,
     required this.procesando,
     required this.onEntrada,
     required this.onSalida,
@@ -424,6 +429,8 @@ class _TarjetaMarcador extends StatelessWidget {
   final WorkSession? activa;
   final DateTime ahora;
   final Duration duraActiva;
+  final Duration jornada;
+  final bool esNocturno;
   final bool procesando;
   final VoidCallback onEntrada;
   final VoidCallback onSalida;
@@ -439,6 +446,16 @@ class _TarjetaMarcador extends StatelessWidget {
         padding: const EdgeInsets.all(22),
         child: Column(
           children: [
+            if (enCurso) ...[
+              // Cronómetro circular que se llena con la jornada y cambia de
+              // color según la fase (ordinaria → extra → nocturna).
+              JornadaTimerRing(
+                elapsed: duraActiva,
+                jornada: jornada,
+                esNocturno: esNocturno,
+              ),
+              const SizedBox(height: 18),
+            ],
             Text(
               Fmt.horaCorta(ahora),
               style: Theme.of(context).textTheme.displayLarge?.copyWith(

@@ -19,8 +19,10 @@ void main() {
   });
 
   testWidgets('captura pantalla Inicio', (tester) async {
-    final hoy = DateTime.now();
-    final inicio = DateTime(hoy.year, hoy.month, hoy.day, 8, 45);
+    // Inicio relativo a "ahora − 5h30m" para que el relleno del cronómetro sea
+    // determinista (fase ordinaria) en cualquier momento en que corra el test.
+    final inicio =
+        DateTime.now().subtract(const Duration(hours: 5, minutes: 30));
 
     final activa = WorkSession(
       id: 1,
