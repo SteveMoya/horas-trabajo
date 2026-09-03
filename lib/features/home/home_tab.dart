@@ -6,6 +6,8 @@ import 'package:horas_trabajo/core/utils/formatters.dart';
 import 'package:horas_trabajo/data/models/work_session.dart';
 import 'package:horas_trabajo/data/models/workplace.dart';
 import 'package:horas_trabajo/domain/calendar/feriados_rd.dart';
+import 'package:horas_trabajo/core/widgets/animated_tap_scale.dart';
+import 'package:horas_trabajo/core/widgets/staggered_fade_in.dart';
 import 'package:horas_trabajo/domain/salary/salary_engine.dart';
 import 'package:horas_trabajo/state/app_state.dart';
 import 'package:provider/provider.dart';
@@ -92,43 +94,56 @@ class _HomeTabState extends State<HomeTab> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            if (!app.perfilCompleto) const _AvisoPerfil(),
+            if (!app.perfilCompleto)
+              const StaggeredFadeIn(index: 0, child: _AvisoPerfil()),
             const SizedBox(height: 16),
-            _TarjetaMarcador(
-              activa: activa,
-              ahora: _ahora,
-              duraActiva: activa == null
-                  ? Duration.zero
-                  : _ahora.difference(activa.inicio),
-              procesando: app.procesando,
-              onEntrada: () => _pulsarEntrada(app),
-              onSalida: () => _pulsarSalida(app),
-              escuchando: _escuchando,
-              onVoz: () => _alternarEscucha(app),
+            StaggeredFadeIn(
+              index: 1,
+              child: _TarjetaMarcador(
+                activa: activa,
+                ahora: _ahora,
+                duraActiva: activa == null
+                    ? Duration.zero
+                    : _ahora.difference(activa.inicio),
+                procesando: app.procesando,
+                onEntrada: () => _pulsarEntrada(app),
+                onSalida: () => _pulsarSalida(app),
+                escuchando: _escuchando,
+                onVoz: () => _alternarEscucha(app),
+              ),
             ),
             if (activa != null) ...[
               const SizedBox(height: 16),
-              _TarjetaIngresoEnVivo(
-                reporte: app.perfil.salarioMensual > 0
-                    ? app.motor.calcularSesionUnica(
-                        activa.copyWith(fin: _ahora),
-                      )
-                    : null,
+              StaggeredFadeIn(
+                index: 2,
+                child: _TarjetaIngresoEnVivo(
+                  reporte: app.perfil.salarioMensual > 0
+                      ? app.motor.calcularSesionUnica(
+                          activa.copyWith(fin: _ahora),
+                        )
+                      : null,
+                ),
               ),
             ],
             const SizedBox(height: 16),
-            _TarjetaTrabajo(
-              app: app,
-              activa: activa,
-              onToggleMonitoreo: () => _alternarMonitor(app),
+            StaggeredFadeIn(
+              index: 3,
+              child: _TarjetaTrabajo(
+                app: app,
+                activa: activa,
+                onToggleMonitoreo: () => _alternarMonitor(app),
+              ),
             ),
             const SizedBox(height: 16),
-            _TarjetaResumenDia(
-              horas: hoyMinutos,
-              totalSesiones: app.sesiones.where(_enHoy).length,
-              salarioHora: app.perfil.salarioMensual > 0
-                  ? app.motor.valorHoraOrdinaria
-                  : null,
+            StaggeredFadeIn(
+              index: 4,
+              child: _TarjetaResumenDia(
+                horas: hoyMinutos,
+                totalSesiones: app.sesiones.where(_enHoy).length,
+                salarioHora: app.perfil.salarioMensual > 0
+                    ? app.motor.valorHoraOrdinaria
+                    : null,
+              ),
             ),
           ],
         ),
@@ -405,55 +420,131 @@ class _TarjetaMarcador extends StatelessWidget {
                   ),
             ),
             const SizedBox(height: 10),
-            if (enCurso)
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                decoration: BoxDecoration(
-                  color: scheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: Text(
-                  Fmt.duracionExtendida(duraActiva),
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontFeatures: const [FontFeature.tabularFigures()],
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: ScaleTransition(scale: animation, child: child),
+              ),
+              child: enCurso
+                  ? Container(
+                      key: const ValueKey('badge-duracion'),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 18, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: scheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(30),
                       ),
+                      child: Text(
+                        Fmt.duracionExtendida(duraActiva),
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              fontFeatures: const [FontFeature.tabularFigures()],
+                            ),
+                      ),
+                    )
+                  : const SizedBox(key: ValueKey('badge-vacio')),
+            ),
+            const SizedBox(height: 22),
+            AnimatedTapScale(
+              child: SizedBox(
+                width: double.infinity,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  transitionBuilder: (child, animation) =>
+                      FadeTransition(opacity: animation, child: child),
+                  child: enCurso
+                      ? FilledButton.icon(
+                          key: const ValueKey('boton-salida'),
+                          onPressed: procesando ? null : onSalida,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: scheme.errorContainer,
+                            foregroundColor: scheme.onErrorContainer,
+                            padding: const EdgeInsets.symmetric(vertical: 18),
+                          ),
+                          icon: const Icon(Icons.logout, size: 26),
+                          label: const Text('Marcar salida', style: TextStyle(fontSize: 20)),
+                        )
+                      : FilledButton.icon(
+                          key: const ValueKey('boton-entrada'),
+                          onPressed: procesando ? null : onEntrada,
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 18),
+                          ),
+                          icon: const Icon(Icons.login, size: 26),
+                          label: const Text('Marcar entrada', style: TextStyle(fontSize: 20)),
+                        ),
                 ),
               ),
-            const SizedBox(height: 22),
-            SizedBox(
-              width: double.infinity,
-              child: enCurso
-                  ? FilledButton.icon(
-                      onPressed: procesando ? null : onSalida,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: scheme.errorContainer,
-                        foregroundColor: scheme.onErrorContainer,
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                      ),
-                      icon: const Icon(Icons.logout, size: 26),
-                      label: const Text('Marcar salida', style: TextStyle(fontSize: 20)),
-                    )
-                  : FilledButton.icon(
-                      onPressed: procesando ? null : onEntrada,
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                      ),
-                      icon: const Icon(Icons.login, size: 26),
-                      label: const Text('Marcar entrada', style: TextStyle(fontSize: 20)),
-                    ),
             ),
             const SizedBox(height: 8),
-            TextButton.icon(
-              onPressed: procesando ? null : onVoz,
-              icon: Icon(escuchando ? Icons.mic : Icons.mic_none,
-                  color: escuchando ? scheme.error : null),
-              label: Text(escuchando ? 'Escuchando…' : 'Marcar por voz'),
+            AnimatedTapScale(
+              scale: 0.92,
+              child: TextButton.icon(
+                onPressed: procesando ? null : onVoz,
+                icon: _IconoMicrofono(escuchando: escuchando, color: scheme.error),
+                label: Text(escuchando ? 'Escuchando…' : 'Marcar por voz'),
+              ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Ícono de micrófono con un pulso continuo mientras [escuchando] es `true`,
+/// para reforzar visualmente que el reconocimiento de voz sigue activo.
+class _IconoMicrofono extends StatefulWidget {
+  const _IconoMicrofono({required this.escuchando, required this.color});
+
+  final bool escuchando;
+  final Color color;
+
+  @override
+  State<_IconoMicrofono> createState() => _IconoMicrofonoState();
+}
+
+class _IconoMicrofonoState extends State<_IconoMicrofono>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 700),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.escuchando) _controller.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(_IconoMicrofono oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.escuchando && !oldWidget.escuchando) {
+      _controller.repeat(reverse: true);
+    } else if (!widget.escuchando && oldWidget.escuchando) {
+      _controller.stop();
+      _controller.reset();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.escuchando) {
+      return const Icon(Icons.mic_none);
+    }
+    return ScaleTransition(
+      scale: Tween(begin: 0.85, end: 1.15).animate(
+        CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+      ),
+      child: Icon(Icons.mic, color: widget.color),
     );
   }
 }
@@ -578,9 +669,17 @@ class _TarjetaTrabajo extends StatelessWidget {
                         ? 'Avisos al llegar/salir del trabajo'
                         : 'Notificaciones de geocerca',
               ),
-              secondary: Icon(
-                app.monitoreando ? Icons.gps_fixed : Icons.gps_not_fixed,
-                color: app.monitoreando ? scheme.primary : scheme.outline,
+              secondary: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                transitionBuilder: (child, animation) => ScaleTransition(
+                  scale: animation,
+                  child: FadeTransition(opacity: animation, child: child),
+                ),
+                child: Icon(
+                  app.monitoreando ? Icons.gps_fixed : Icons.gps_not_fixed,
+                  key: ValueKey(app.monitoreando),
+                  color: app.monitoreando ? scheme.primary : scheme.outline,
+                ),
               ),
             ),
             if (wp != null)

@@ -25,7 +25,7 @@ class _RootScreenState extends State<RootScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: _index, children: _pantallas),
+      body: _CrossfadeIndexedStack(index: _index, children: _pantallas),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
@@ -52,6 +52,40 @@ class _RootScreenState extends State<RootScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Como [IndexedStack], mantiene todas las pantallas montadas (sin perder su
+/// estado al cambiar de pestaña — temporizadores, controladores de texto,
+/// reconocimiento de voz, etc.), pero cruza con un fade + leve deslizamiento
+/// hacia la pantalla activa en vez de cortar en seco.
+class _CrossfadeIndexedStack extends StatelessWidget {
+  const _CrossfadeIndexedStack({required this.index, required this.children});
+
+  final int index;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        for (var i = 0; i < children.length; i++)
+          IgnorePointer(
+            ignoring: i != index,
+            child: AnimatedOpacity(
+              opacity: i == index ? 1 : 0,
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOut,
+              child: AnimatedSlide(
+                offset: i == index ? Offset.zero : const Offset(0, 0.02),
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOut,
+                child: children[i],
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

@@ -34,3 +34,8 @@ ios/**/Flutter/ephemeral
 # Secrets
 .env
 .env.*
+
+# Herramientas locales
+.atl/
+.codegraph/
+test/failures/

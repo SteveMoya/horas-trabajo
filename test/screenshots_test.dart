@@ -81,6 +81,10 @@ void main() {
       ),
     );
     await tester.pump();
+    // Deja terminar la entrada escalonada de las tarjetas (duración máxima
+    // ~580ms) sin usar pumpAndSettle: el ticker de 1s de HomeTab reprograma
+    // un frame cada segundo y nunca "asienta".
+    await tester.pump(const Duration(milliseconds: 650));
 
     await expectLater(
       find.byType(HomeTab),

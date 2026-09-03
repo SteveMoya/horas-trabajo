@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:horas_trabajo/core/utils/formatters.dart';
+import 'package:horas_trabajo/core/widgets/staggered_fade_in.dart';
 import 'package:horas_trabajo/data/models/work_session.dart';
 import 'package:horas_trabajo/features/history/session_detail_sheet.dart';
 import 'package:horas_trabajo/state/app_state.dart';
@@ -18,12 +19,14 @@ class HistoryTab extends StatelessWidget {
           : ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               itemCount: app.sesiones.length,
-              itemBuilder: (context, i) => _TarjetaSesion(
-                sesion: app.sesiones[i],
-                nuevoActiva: app.sesiones[i].enProgreso,
-                onTap: () => _abrirDetalle(context, app, app.sesiones[i]),
-                onEliminar: () =>
-                    app.eliminarSesion(app.sesiones[i].id),
+              itemBuilder: (context, i) => StaggeredFadeIn(
+                index: i,
+                child: _TarjetaSesion(
+                  sesion: app.sesiones[i],
+                  nuevoActiva: app.sesiones[i].enProgreso,
+                  onTap: () => _abrirDetalle(context, app, app.sesiones[i]),
+                  onEliminar: () => app.eliminarSesion(app.sesiones[i].id),
+                ),
               ),
             ),
     );

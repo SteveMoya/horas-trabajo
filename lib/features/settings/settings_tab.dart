@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:horas_trabajo/core/navigation/fade_through_route.dart';
 import 'package:horas_trabajo/core/theme/app_theme.dart';
 import 'package:horas_trabajo/core/theme/theme_manager.dart';
 import 'package:horas_trabajo/data/models/employee_profile.dart';
@@ -100,7 +101,7 @@ class _SettingsTabState extends State<SettingsTab> {
                   subtitle: const Text('Feriados RD, vacaciones y permisos'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(builder: (_) => const CalendarioScreen()),
+                    FadeThroughRoute<void>(builder: (_) => const CalendarioScreen()),
                   ),
                 ),
                 const Divider(height: 1),
@@ -110,7 +111,7 @@ class _SettingsTabState extends State<SettingsTab> {
                   subtitle: const Text('Backup JSON, CSV y restaurar'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(builder: (_) => const BackupScreen()),
+                    FadeThroughRoute<void>(builder: (_) => const BackupScreen()),
                   ),
                 ),
               ],
