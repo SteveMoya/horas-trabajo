@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Botón "Entrada": píldora sólida en blanco, más prominente que el de
-     salida — es la acción principal cuando no hay jornada en curso. -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="rectangle">
-    <solid android:color="#FFFFFF" />
-    <corners android:radius="18dp" />
-</shape>

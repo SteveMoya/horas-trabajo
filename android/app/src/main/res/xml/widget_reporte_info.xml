@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="240dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="150dp"
+    android:minResizeHeight="90dp"
+    android:maxResizeWidth="300dp"
+    android:maxResizeHeight="300dp"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/home_widget_reporte"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen">
+</appwidget-provider>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Botón "MARCAR ENTRADA": píldora sólida en blanco sobre la marca azul,
+     la acción principal cuando no hay jornada en curso (como un
+     FilledButton en el resto de la app). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#FFFFFF" />
+    <corners android:radius="22dp" />
+</shape>

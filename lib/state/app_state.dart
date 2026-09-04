@@ -156,6 +156,34 @@ class AppState extends ChangeNotifier {
     }
 
     notifyListeners();
+
+    // Mantiene los widgets en sincronía con la base de datos al arrancar
+    // (p. ej. un marcado hecho desde el widget mientras la app estaba
+    // cerrada). Idempotente y best-effort.
+    unawaited(actualizarHomeWidget());
+  }
+
+  /// [SINCRONÍA] Relee las sesiones y la jornada en curso de la base de datos
+  /// sin mostrar la pantalla de carga, para reflejar cambios hechos fuera de
+  /// la app (desde un widget de pantalla de inicio) cuando la app vuelve a
+  /// primer plano. Después refresca los widgets para mantenerlos al día.
+  Future<void> refrescarDesdeBase() async {
+    try {
+      final resultados = await Future.wait([
+        _sessions.obtenerTodas(),
+        _sessions.obtenerEnProgreso(),
+      ]);
+      _sesiones = resultados[0] as List<WorkSession>;
+      _activa = resultados[1] as WorkSession?;
+    } catch (_) {/* mantiene el estado actual si la lectura falla */}
+
+    _tick?.cancel();
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_activa != null) notifyListeners();
+    });
+
+    notifyListeners();
+    unawaited(actualizarHomeWidget());
   }
 
   /// Activa/desactiva los recordatorios "¿olvidaste marcar?". Al activar,
@@ -367,6 +395,7 @@ class AppState extends ChangeNotifier {
     ];
     if (_activa?.id == sesion.id) _activa = sesion;
     notifyListeners();
+    unawaited(actualizarHomeWidget());
   }
 
   Future<void> eliminarSesion(int id) async {
@@ -374,6 +403,7 @@ class AppState extends ChangeNotifier {
     _sesiones = _sesiones.where((s) => s.id != id).toList();
     if (_activa?.id == id) _activa = null;
     notifyListeners();
+    unawaited(actualizarHomeWidget());
   }
 
   @override

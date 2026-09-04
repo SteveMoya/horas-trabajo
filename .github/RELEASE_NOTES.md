@@ -1,6 +1,27 @@
-# Horas Trabajo RD — Beta v0.8.4
+# Horas Trabajo RD — Beta v0.8.5
 
-## Onboarding centrado en pantalla 🎯
+## 3 widgets de pantalla de inicio nuevos (Material 3) 🧩
+
+Reemplazan al widget único anterior por **3 variantes independientes** que se
+añaden cada una desde el menú de widgets, con el estilo de la app (marca azul,
+esquinas suaves):
+
+- 🕐 **Reloj** — reloj en vivo (tic 1s), la fecha en español y el estado de la
+  jornada. Toque abre la app.
+- ▶️ **Marcar** — un **botón grande** que alterna "Marcar entrada" / "Marcar
+  salida" según el estado, sin abrir la app.
+- 📊 **Reporte** — resumen rápido de las **horas de hoy y de la semana** en
+  chips Material 3, más el estado de la jornada.
+
+## Sincronización de estados arreglada 🔄
+
+- Los widgets ahora se actualizan **al arrancar la app**, al editar/eliminar
+  sesiones y al volver a primer plano (además de al marcar).
+- Al reabrir la app, esta relee la base de datos y aplica cualquier marcado
+  hecho desde un widget mientras estaba cerrada: la UI y los widgets siempre
+  quedan en sincronía, desde cualquier lado.
+
+## v0.8.4 — Onboarding centrado en pantalla 🎯
 
 - El contenido de las páginas de bienvenida ahora queda **centrado
   verticalmente** en el área central, en vez de pegado arriba con un hueco

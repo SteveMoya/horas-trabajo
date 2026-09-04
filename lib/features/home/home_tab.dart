@@ -443,6 +443,28 @@ class _TarjetaMarcador extends StatelessWidget {
   final bool escuchando;
   final VoidCallback onVoz;
 
+  /// Transición de aparición del cronómetro: fundido + escala con ligero
+  /// rebote + leve ascenso. Con "Quitar animaciones" solo funde (sin escala).
+  Widget _transicionAnillo(
+      BuildContext context, Widget child, Animation<double> anim) {
+    final reduce = reducirMovimiento(context);
+    final a = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+    Widget w = FadeTransition(opacity: a, child: child);
+    if (!reduce) {
+      w = SlideTransition(
+        position: Tween(begin: const Offset(0, 0.06), end: Offset.zero)
+            .animate(a),
+        child: ScaleTransition(
+          scale: Tween(begin: 0.88, end: 1.0).animate(
+            CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
+          ),
+          child: w,
+        ),
+      );
+    }
+    return w;
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -452,16 +474,30 @@ class _TarjetaMarcador extends StatelessWidget {
         padding: const EdgeInsets.all(22),
         child: Column(
           children: [
-            if (enCurso) ...[
-              // Cronómetro circular que se llena con la jornada y cambia de
-              // color según la fase (ordinaria → extra → nocturna).
-              JornadaTimerRing(
-                elapsed: duraActiva,
-                jornada: jornada,
-                esNocturno: esNocturno,
-              ),
-              const SizedBox(height: 18),
-            ],
+            // El cronómetro aparece (y desaparece) con una animación suave y
+            // profesional al marcar la entrada/salida: fundido + ligera escala
+            // + leve ascenso. Respeta "Quitar animaciones" del sistema.
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, anim) =>
+                  _transicionAnillo(context, child, anim),
+              child: enCurso
+                  ? Column(
+                      key: const ValueKey('anillo-jornada'),
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        JornadaTimerRing(
+                          elapsed: duraActiva,
+                          jornada: jornada,
+                          esNocturno: esNocturno,
+                        ),
+                        const SizedBox(height: 18),
+                      ],
+                    )
+                  : const SizedBox(key: ValueKey('anillo-vacio')),
+            ),
             Text(
               enCurso ? 'Sesión en curso' : 'Fuera de la jornada',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(

@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Fondo del widget: esquinas grandes y continuas ("squircle"), la misma
-     seña visual que las Cards/botones de la app (ver PixelRadii en
-     lib/core/theme/pixel_shapes.dart). -->
+<!-- Fondo del widget: gradiente vertical de la marca azul (Material 3)
+     con esquinas grandes y continuas ("squircle"), coherente con las
+     Cards de la app (ver PixelRadii en lib/core/theme/pixel_shapes.dart). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="#1565C0" />
+    <gradient
+        android:angle="270"
+        android:startColor="#1A70C7"
+        android:endColor="#0E4E9E" />
     <corners android:radius="24dp" />
 </shape>

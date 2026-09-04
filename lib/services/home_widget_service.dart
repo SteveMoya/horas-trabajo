@@ -6,10 +6,16 @@ import 'package:horas_trabajo/core/utils/formatters.dart';
 import 'package:horas_trabajo/data/models/work_session.dart';
 import 'package:horas_trabajo/data/repositories/work_session_repository.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 
-/// Nombre del `HomeWidgetProvider` nativo (android/app/src/main/kotlin/.../
-/// MarcadorWidgetProvider.kt) — debe coincidir exactamente.
-const _kProviderName = 'MarcadorWidgetProvider';
+/// Nombres de los `HomeWidgetProvider` nativos (android/.../Widget*.kt) —
+/// deben coincidir exactamente con el `android:name` de cada receiver:
+/// reloj, marcador y reporte.
+const _kProviders = [
+  'WidgetRelojProvider',
+  'WidgetMarcadorProvider',
+  'WidgetReporteProvider',
+];
 
 /// Callback headless: se ejecuta en un isolate de Flutter nuevo cuando se
 /// toca un botón del widget de pantalla de inicio, sin abrir la app.
@@ -37,6 +43,15 @@ Future<void> homeWidgetInteractivityCallback(Uri? uri) async {
       if (activa != null) {
         await sessions.actualizar(activa.copyWith(fin: DateTime.now()));
       }
+    } else if (uri.host == 'marcaralternar') {
+      // Botón único del widget Marcador: si hay jornada en curso la cierra,
+      // si no, abre una nueva.
+      final activa = await sessions.obtenerEnProgreso();
+      if (activa == null) {
+        await sessions.insertar(WorkSession(id: 0, inicio: DateTime.now()));
+      } else {
+        await sessions.actualizar(activa.copyWith(fin: DateTime.now()));
+      }
     }
     await actualizarHomeWidget();
   } catch (e) {
@@ -44,11 +59,12 @@ Future<void> homeWidgetInteractivityCallback(Uri? uri) async {
   }
 }
 
-/// Refresca el widget de pantalla de inicio con el estado actual, y con
-/// las horas de hoy y de la semana para su variante grande. Se llama
-/// tanto desde el callback headless de arriba como desde AppState al
-/// marcar entrada/salida dentro de la propia app, para que el widget
-/// nunca quede desactualizado sin importar desde dónde se marcó.
+/// Refresca los 3 widgets de pantalla de inicio con el estado actual y con
+/// las horas de hoy, de la semana y la fecha en español (para el widget
+/// reloj). Cada widget lee de estas claves compartidas vía SharedPreferences.
+/// Se llama tanto desde el callback headless de arriba como desde AppState
+/// al marcar/editar/eliminar sesiones, para que los widgets nunca queden
+/// desactualizados sin importar desde dónde se hizo el cambio.
 Future<void> actualizarHomeWidget() async {
   try {
     // Este isolate headless nunca pasa por main.dart, así que Fmt.horaCorta
@@ -67,17 +83,18 @@ Future<void> actualizarHomeWidget() async {
     final inicioHoy = DateTime(ahora.year, ahora.month, ahora.day);
     final inicioSemana = inicioHoy.subtract(Duration(days: ahora.weekday - 1));
 
-    await HomeWidget.saveWidgetData<String>(
-      'estado',
-      activa == null
-          ? 'Fuera de la jornada'
-          : 'En curso desde ${Fmt.horaCorta(activa.inicio)}',
-    );
-    // El widget nativo arma su propio Chronometer con esta hora de inicio
-    // (ver MarcadorWidgetProvider.kt) — vacío significa "sin jornada activa".
+    final enCurso = activa != null;
+    final estado = enCurso
+        ? 'En curso desde ${Fmt.horaCorta(activa.inicio)}'
+        : 'Fuera de la jornada';
+
+    await HomeWidget.saveWidgetData<String>('en_curso', enCurso ? '1' : '0');
+    await HomeWidget.saveWidgetData<String>('estado', estado);
+    // El widget nativo arma su propio Chronometer/estado con esta hora de
+    // inicio (ver WidgetAcciones.kt) — vacío significa "sin jornada activa".
     await HomeWidget.saveWidgetData<String>(
       'inicio_millis',
-      activa == null ? '' : activa.inicio.millisecondsSinceEpoch.toString(),
+      enCurso ? activa.inicio.millisecondsSinceEpoch.toString() : '',
     );
     await HomeWidget.saveWidgetData<String>(
       'hoy_horas',
@@ -87,7 +104,15 @@ Future<void> actualizarHomeWidget() async {
       'semana_horas',
       Fmt.horas(_horasDesde(sesiones, inicioSemana, ahora)),
     );
-    await HomeWidget.updateWidget(androidName: _kProviderName);
+    // Fecha en español para el widget reloj.
+    await HomeWidget.saveWidgetData<String>(
+      'fecha',
+      DateFormat('EEEE d \'de\' MMMM', 'es').format(ahora),
+    );
+
+    for (final provider in _kProviders) {
+      await HomeWidget.updateWidget(androidName: provider);
+    }
   } catch (e) {
     debugPrint('actualizarHomeWidget falló: $e');
   }

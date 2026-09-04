@@ -33,12 +33,12 @@ class _HiAppState extends State<HiApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState estado) {
-    // Re-revisa actualizaciones cada vez que la app vuelve a primer plano. La
-    // revisión de arranque frío (main.dart) no basta: si el usuario deja la app
-    // abierta y solo la minimiza, no detectaría un release recién publicado
-    // hasta cerrarla del todo. El controller ya limita la frecuencia (throttle)
-    // y avisa una sola vez por versión.
+    // Al volver a primer plano, recarga desde la base de datos para aplicar
+    // cualquier marcado hecho desde un widget de pantalla de inicio mientras
+    // la app no estaba al frente (así la UI y los widgets quedan en sincronía)
+    // y re-revisa actualizaciones (UpdateController).
     if (estado == AppLifecycleState.resumed) {
+      unawaited(widget.app.refrescarDesdeBase());
       unawaited(UpdateController.instance.verificar());
     }
   }

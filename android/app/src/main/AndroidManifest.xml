@@ -56,16 +56,41 @@
             </intent-filter>
         </activity>
 
-        <!-- Widget de pantalla de inicio: marcar entrada/salida sin abrir la app. -->
+        <!-- Widgets de pantalla de inicio (3 variantes Material 3, independientes):
+             . Reloj: hora en vivo + estado.
+             . Marcador: botón grande para marcar/desmarcar entrada.
+             . Reporte: resumen rápido de horas de hoy y de la semana.
+             Los botones disparan MarcadorWidgetActionReceiver y el callback
+             Dart headless (lib/services/home_widget_service.dart). -->
         <receiver
-            android:name=".MarcadorWidgetProvider"
+            android:name=".WidgetRelojProvider"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/home_widget_info"/>
+                android:resource="@xml/widget_reloj_info"/>
+        </receiver>
+        <receiver
+            android:name=".WidgetMarcadorProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_marcador_info"/>
+        </receiver>
+        <receiver
+            android:name=".WidgetReporteProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_reporte_info"/>
         </receiver>
         <!-- Recibe el toque de los botones del widget y ejecuta el callback
              Dart headless (propio, ver MarcadorWidgetActionReceiver.kt). -->
