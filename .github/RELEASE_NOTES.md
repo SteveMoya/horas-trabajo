@@ -1,6 +1,14 @@
-# Horas Trabajo RD — Beta v0.8.0
+# Horas Trabajo RD — Beta v0.8.1
 
-## Ilustraciones, animaciones y onboarding rediseñado 🎨
+## Corrección: la descarga de actualizaciones fallaba 🛠️
+
+- **Bug arreglado**: al actualizar, la descarga del APK podía fallar con
+  `FileSystemException: An async operation is currently pending` y nunca
+  completarse. La escritura del archivo no esperaba a que cada bloque
+  terminara de guardarse antes de recibir el siguiente — ahora la
+  descarga se completa de forma confiable.
+
+## v0.8.0 — Ilustraciones, animaciones y onboarding rediseñado 🎨
 
 - **Sistema de ilustraciones propio**: 10 ilustraciones SVG (café, libros,
   escritorio, gráficos, personas en estilo minimalista) que se adaptan
