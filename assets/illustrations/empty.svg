@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <ellipse cx="100" cy="158" rx="62" ry="8" fill="{{surfaceLow}}"/>
+
+  <!-- Cuaderno abierto, vacío -->
+  <g>
+    <path d="M40 70 L98 62 L98 140 L40 148 Z" fill="{{surface}}"/>
+    <path d="M160 70 L102 62 L102 140 L160 148 Z" fill="{{surface}}"/>
+    <path d="M98 62 L102 62 L102 140 L98 140 Z" fill="{{outline}}"/>
+    <path d="M52 84 h34 M52 96 h30 M52 108 h34" stroke="{{onSurfaceVariant}}" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+    <path d="M112 84 h34 M116 96 h30 M112 108 h34" stroke="{{onSurfaceVariant}}" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+  </g>
+
+  <!-- Hoja suelta flotando -->
+  <g id="empty-leaf" transform="rotate(-12 148 46)">
+    <rect x="128" y="30" width="40" height="32" rx="4" fill="{{primaryContainer}}"/>
+    <path d="M136 40 h24 M136 48 h18" stroke="{{onPrimaryContainer}}" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>

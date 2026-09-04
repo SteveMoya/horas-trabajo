@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <ellipse cx="100" cy="158" rx="60" ry="8" fill="{{surfaceLow}}"/>
+
+  <!-- Libro abierto con página en movimiento -->
+  <path d="M46 90 L96 82 L96 146 L46 154 Z" fill="{{surface}}"/>
+  <path d="M154 90 L104 82 L104 146 L154 154 Z" fill="{{surface}}"/>
+  <path d="M96 82 L100 80 L104 82 L104 146 L96 146 Z" fill="{{outline}}"/>
+  <path id="loading-page" d="M100 80 C124 68 140 78 148 92 C132 88 116 92 104 100 Z" fill="{{primaryContainer}}" opacity="0.9"/>
+
+  <!-- Taza de café -->
+  <g>
+    <ellipse cx="164" cy="150" rx="14" ry="4" fill="{{surfaceLow}}"/>
+    <path d="M156 132 h16 v12 a8 8 0 0 1-16 0 Z" fill="{{coffeeLight}}"/>
+    <path d="M172 134 c6 -1 6 9 0 9" stroke="{{coffeeLight}}" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>

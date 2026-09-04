@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <ellipse cx="100" cy="168" rx="56" ry="8" fill="{{surfaceLow}}"/>
+
+  <!-- Teléfono con reloj en pantalla -->
+  <rect x="66" y="46" width="68" height="120" rx="16" fill="{{surface}}"/>
+  <rect x="74" y="58" width="52" height="88" rx="8" fill="{{primaryContainer}}"/>
+  <circle cx="100" cy="102" r="26" stroke="{{onPrimaryContainer}}" stroke-width="3" fill="none"/>
+  <path d="M100 86 v18 l14 8" stroke="{{onPrimaryContainer}}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- Mano tocando la pantalla -->
+  <path d="M150 150 C160 138 158 122 148 114 L140 122 C146 128 148 138 142 146 Z" fill="{{outline}}"/>
+
+  <!-- Onda de toque -->
+  <g id="track-ripple" stroke="{{primary}}" stroke-width="3" fill="none" opacity="0.5">
+    <circle cx="142" cy="128" r="10"/>
+    <circle cx="142" cy="128" r="18"/>
+  </g>
+</svg>

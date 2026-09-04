@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <ellipse cx="100" cy="158" rx="60" ry="8" fill="{{surfaceLow}}"/>
+
+  <!-- Taza volcada -->
+  <g transform="rotate(-24 70 118)">
+    <path d="M52 100 h30 v20 a15 15 0 0 1-30 0 Z" fill="{{coffeeLight}}"/>
+    <path d="M82 104 c9 -2 9 14 0 14" stroke="{{coffeeLight}}" stroke-width="4" fill="none" stroke-linecap="round"/>
+  </g>
+  <path d="M84 138 c14 4 28 4 40 -2 c10 8 18 10 30 6" stroke="{{coffee}}" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- Papel arrugado con marca de error -->
+  <g>
+    <path d="M110 70 L150 64 L156 110 L118 118 Z" fill="{{surface}}"/>
+    <path d="M124 82 h18 M124 92 h22" stroke="{{onSurfaceVariant}}" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+    <path d="M118 118 l8 -14 l6 12 l8 -10" stroke="{{error}}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

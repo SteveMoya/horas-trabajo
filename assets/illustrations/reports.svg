@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <ellipse cx="100" cy="168" rx="60" ry="8" fill="{{surfaceLow}}"/>
+
+  <!-- Tarjeta con gráfico de barras -->
+  <rect x="40" y="66" width="80" height="92" rx="10" fill="{{surface}}"/>
+  <path d="M54 84 h52" stroke="{{onSurfaceVariant}}" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+  <g>
+    <rect x="54" y="120" width="12" height="28" rx="3" fill="{{primary}}"/>
+    <rect x="72" y="104" width="12" height="44" rx="3" fill="{{primaryContainer}}"/>
+    <rect x="90" y="130" width="12" height="18" rx="3" fill="{{primary}}"/>
+  </g>
+
+  <!-- Calendario con respaldo confirmado -->
+  <g>
+    <rect x="118" y="46" width="52" height="56" rx="8" fill="{{tertiaryContainer}}"/>
+    <path d="M118 62 h52" stroke="{{onPrimaryContainer}}" stroke-width="3" opacity="0.4"/>
+    <path d="M130 40 v12 M158 40 v12" stroke="{{outline}}" stroke-width="4" stroke-linecap="round"/>
+    <path d="M132 82 l8 8 l16 -18" stroke="{{onPrimaryContainer}}" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <ellipse cx="100" cy="168" rx="66" ry="8" fill="{{surfaceLow}}"/>
+
+  <!-- Dos personas sentadas, sin rasgos faciales -->
+  <g>
+    <circle cx="68" cy="92" r="20" fill="{{outline}}"/>
+    <path d="M40 160 C40 128 56 112 68 112 C80 112 96 128 96 160 Z" fill="{{outline}}"/>
+  </g>
+  <g>
+    <circle cx="134" cy="88" r="20" fill="{{primaryContainer}}"/>
+    <path d="M106 160 C106 126 122 108 134 108 C146 108 162 126 162 160 Z" fill="{{primaryContainer}}"/>
+  </g>
+
+  <!-- Taza de café compartida -->
+  <rect x="86" y="140" width="30" height="10" rx="3" fill="{{coffeeLight}}"/>
+  <g>
+    <path d="M92 128 h18 v10 a9 9 0 0 1-18 0 Z" fill="{{coffeeLight}}"/>
+    <path d="M110 130 c6 -1 6 9 0 9" stroke="{{coffeeLight}}" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- Corazón flotando -->
+  <path id="support-heart" d="M100 76 c-6 -8 -18 -3 -18 6 c0 8 12 14 18 20 c6 -6 18 -12 18 -20 c0 -9 -12 -14 -18 -6 Z" fill="{{tertiary}}" opacity="0.85"/>
+</svg>

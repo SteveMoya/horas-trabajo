@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" fill="none">
+  <ellipse cx="160" cy="222" rx="120" ry="10" fill="{{surfaceLow}}"/>
+
+  <!-- Escritorio -->
+  <rect x="26" y="176" width="268" height="14" rx="7" fill="{{surface}}"/>
+  <rect x="40" y="190" width="14" height="34" rx="4" fill="{{surface}}"/>
+  <rect x="266" y="190" width="14" height="34" rx="4" fill="{{surface}}"/>
+
+  <!-- Pila de libros -->
+  <g>
+    <rect x="222" y="150" width="58" height="14" rx="4" fill="{{tertiaryContainer}}"/>
+    <rect x="228" y="136" width="46" height="14" rx="4" fill="{{primaryContainer}}"/>
+    <rect x="224" y="122" width="52" height="14" rx="4" fill="{{coffeeLight}}"/>
+  </g>
+
+  <!-- Laptop -->
+  <g>
+    <path d="M150 176 L140 152 C140 148 143 145 147 145 L213 145 C217 145 220 148 220 152 L210 176 Z" fill="{{surface}}"/>
+    <rect x="128" y="176" width="104" height="8" rx="4" fill="{{surface}}"/>
+    <rect x="152" y="86" width="76" height="60" rx="8" fill="{{onSurfaceVariant}}"/>
+    <rect x="158" y="92" width="64" height="48" rx="4" fill="{{primaryContainer}}"/>
+    <path d="M172 108 h36 M172 118 h28 M172 128 h32" stroke="{{onPrimaryContainer}}" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <!-- Persona sentada, sin rasgos faciales -->
+  <g>
+    <circle cx="96" cy="96" r="24" fill="{{outline}}"/>
+    <path d="M62 176 C62 140 82 122 96 122 C110 122 130 140 130 176 Z" fill="{{outline}}"/>
+    <path d="M118 150 C132 148 142 154 148 164" stroke="{{outline}}" stroke-width="10" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- Taza de café con vapor -->
+  <g id="welcome-cup">
+    <ellipse cx="52" cy="192" rx="20" ry="5" fill="{{surfaceLow}}"/>
+    <path d="M38 168 h24 v16 a12 12 0 0 1-24 0 Z" fill="{{coffeeLight}}"/>
+    <path d="M62 172 c8 -2 8 12 0 12" stroke="{{coffeeLight}}" stroke-width="4" fill="none" stroke-linecap="round"/>
+  </g>
+  <g id="welcome-steam" stroke="{{coffee}}" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.55">
+    <path d="M44 160 c-4 -6 4 -8 0 -14"/>
+    <path d="M54 160 c-4 -6 4 -8 0 -14"/>
+  </g>
+</svg>

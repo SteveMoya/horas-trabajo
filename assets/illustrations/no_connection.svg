@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <ellipse cx="100" cy="158" rx="62" ry="8" fill="{{surfaceLow}}"/>
+
+  <!-- Laptop en el escritorio -->
+  <path d="M62 130 L58 108 C58 104 61 101 65 101 L131 101 C135 101 138 104 138 108 L134 130 Z" fill="{{surface}}"/>
+  <rect x="46" y="130" width="104" height="8" rx="4" fill="{{surface}}"/>
+  <rect x="70" y="108" width="56" height="18" rx="3" fill="{{onSurfaceVariant}}" opacity="0.35"/>
+
+  <!-- Señal wifi cortada -->
+  <g id="no-connection-signal" stroke="{{outline}}" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.6">
+    <path d="M78 76 a34 34 0 0 1 44 0"/>
+    <path d="M88 88 a18 18 0 0 1 24 0"/>
+    <circle cx="100" cy="98" r="4" fill="{{outline}}" stroke="none"/>
+  </g>
+  <path d="M64 62 L136 118" stroke="{{error}}" stroke-width="5" stroke-linecap="round"/>
+</svg>
