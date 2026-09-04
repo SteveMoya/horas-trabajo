@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:horas_trabajo/core/utils/formatters.dart';
 import 'package:horas_trabajo/core/widgets/animated_tap_scale.dart';
 import 'package:horas_trabajo/core/widgets/staggered_fade_in.dart';
+import 'package:horas_trabajo/core/widgets/state_views.dart';
 import 'package:horas_trabajo/data/models/ausencia.dart';
 import 'package:horas_trabajo/data/repositories/ausencias_repository.dart';
 import 'package:horas_trabajo/domain/calendar/feriados_rd.dart';
@@ -117,11 +118,10 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
                         ?.copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 12),
                 if (_ausencias.isEmpty)
-                  Text(
-                    'Sin vacaciones ni permisos registrados.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                  const EmptyState(
+                    titulo: 'Sin vacaciones ni permisos',
+                    mensaje: 'Usa «Agregar» para registrar tu próxima ausencia.',
+                    compact: true,
                   )
                 else
                   StaggeredFadeIn(

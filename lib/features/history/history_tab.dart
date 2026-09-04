@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:horas_trabajo/core/utils/formatters.dart';
 import 'package:horas_trabajo/core/widgets/staggered_fade_in.dart';
+import 'package:horas_trabajo/core/widgets/state_views.dart';
 import 'package:horas_trabajo/data/models/work_session.dart';
 import 'package:horas_trabajo/features/history/session_detail_sheet.dart';
 import 'package:horas_trabajo/state/app_state.dart';
@@ -104,22 +105,8 @@ class _Vacio extends StatelessWidget {
   const _Vacio();
 
   @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.history, size: 64, color: scheme.outline),
-          const SizedBox(height: 12),
-          Text('Sin registros', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 4),
-          Text('Marca tu entrada en la pestaña «Marcar»',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  )),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const EmptyState(
+        titulo: 'Sin registros',
+        mensaje: 'Marca tu entrada en la pestaña «Marcar»',
+      );
 }

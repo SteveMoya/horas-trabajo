@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:horas_trabajo/core/utils/formatters.dart';
 import 'package:horas_trabajo/core/widgets/animated_tap_scale.dart';
 import 'package:horas_trabajo/core/widgets/staggered_fade_in.dart';
+import 'package:horas_trabajo/core/widgets/state_views.dart';
 import 'package:horas_trabajo/domain/salary/salary_engine.dart';
 import 'package:horas_trabajo/services/backup_service.dart';
 import 'package:horas_trabajo/state/app_state.dart';
@@ -189,7 +190,6 @@ class _TarjetaDesglose extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -203,10 +203,10 @@ class _TarjetaDesglose extends StatelessWidget {
                     ?.copyWith(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             if (lineas.isEmpty)
-              Text('Sin actividad en el período.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ))
+              const EmptyState(
+                titulo: 'Sin actividad en el período',
+                compact: true,
+              )
             else
               for (final l in lineas)
                 Padding(
@@ -343,11 +343,9 @@ class _TarjetaGraficoDias extends StatelessWidget {
             SizedBox(
               height: 160,
               child: sinActividad
-                  ? Center(
-                      child: Text('Sin actividad en el período.',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: scheme.onSurfaceVariant,
-                              )),
+                  ? const EmptyState(
+                      titulo: 'Sin actividad en el período',
+                      compact: true,
                     )
                   : BarChart(
                       BarChartData(
@@ -471,7 +469,6 @@ class _TarjetaGraficoCategorias extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final totalHoras = lineas.fold<double>(0, (a, l) => a + l.horas);
 
     return Card(
@@ -487,10 +484,10 @@ class _TarjetaGraficoCategorias extends StatelessWidget {
                     ?.copyWith(fontWeight: FontWeight.w600)),
             const SizedBox(height: 16),
             if (lineas.isEmpty || totalHoras <= 0)
-              Text('Sin actividad en el período.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ))
+              const EmptyState(
+                titulo: 'Sin actividad en el período',
+                compact: true,
+              )
             else
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
