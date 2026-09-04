@@ -164,7 +164,11 @@ class UpdateService {
     var descargados = 0;
     try {
       await for (final chunk in streamed.stream) {
-        sink.writeFrom(chunk);
+        // RandomAccessFile solo permite una operación async pendiente a la
+        // vez: sin este await, un chunk podía llegar antes de que la
+        // escritura anterior terminara y lanzaba "An async operation is
+        // currently pending" en vez de completar la descarga.
+        await sink.writeFrom(chunk);
         descargados += chunk.length;
         onProgress?.call(descargados, total);
       }
