@@ -1,6 +1,13 @@
-# Horas Trabajo RD — Beta v0.8.2
+# Horas Trabajo RD — Beta v0.8.3
 
-## Widget de pantalla de inicio rediseñado y ajustes de actualización 📱
+## Corrección: "error desconocido" al instalar una actualización 🛠️
+
+- **Bug arreglado**: en varios fabricantes, la instalación se completaba
+  bien pero la app la reportaba como "error desconocido" porque el
+  instalador del sistema devolvía un código de resultado no estándar.
+  Ahora solo se trata como fallida cuando el usuario realmente cancela.
+
+## v0.8.2 — Widget de pantalla de inicio rediseñado y ajustes de actualización 📱
 
 - **Widget adaptable por tamaño**: el widget de Marcar entrada/salida
   ahora cambia de forma según lo grande que lo hagas en tu pantalla de
