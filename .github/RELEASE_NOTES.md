@@ -1,6 +1,18 @@
-# Horas Trabajo RD — Beta v0.8.1
+# Horas Trabajo RD — Beta v0.8.2
 
-## Corrección: la descarga de actualizaciones fallaba 🛠️
+## Widget de pantalla de inicio rediseñado y ajustes de actualización 📱
+
+- **Widget adaptable por tamaño**: el widget de Marcar entrada/salida
+  ahora cambia de forma según lo grande que lo hagas en tu pantalla de
+  inicio — chico (solo marcar), mediano (suma un **cronómetro en vivo**
+  cuando hay jornada en curso) y grande (suma las **horas de hoy y de
+  la semana**).
+- **Visual renovado**: esquinas grandes redondeadas y botones tipo
+  píldora, el mismo lenguaje visual del resto de la app.
+- **Ajustes → Actualizaciones**: nuevo botón para buscar una versión
+  nueva manualmente, y la versión instalada de la app siempre visible.
+
+## v0.8.1 — Corrección: la descarga de actualizaciones fallaba 🛠️
 
 - **Bug arreglado**: al actualizar, la descarga del APK podía fallar con
   `FileSystemException: An async operation is currently pending` y nunca
