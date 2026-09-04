@@ -1,6 +1,23 @@
-# Horas Trabajo RD — Beta v0.7.4
+# Horas Trabajo RD — Beta v0.8.0
 
-## Instalación sin re-descargar y con resultado visible ✅
+## Ilustraciones, animaciones y onboarding rediseñado 🎨
+
+- **Sistema de ilustraciones propio**: 10 ilustraciones SVG (café, libros,
+  escritorio, gráficos, personas en estilo minimalista) que se adaptan
+  automáticamente a cualquier color de tema elegido — coherentes en toda la
+  app, en vez de íconos sueltos.
+- **Estados ilustrados**: Historial, Calendario y Reporte ahora muestran una
+  ilustración animada (en vez de un ícono genérico) cuando no hay nada que
+  mostrar todavía.
+- **Onboarding completamente rediseñado** (9 pantallas): bienvenida,
+  funciones principales explicadas paso a paso (Marca → Calcula → Organiza),
+  características destacadas, y una nueva pantalla **"Apoya este
+  proyecto"** — el botón de donación queda marcado como "Próximamente"
+  hasta conectar un método de pago real, sin fingir un cobro.
+- Las ilustraciones tienen una animación de entrada suave y respetan
+  "Quitar animaciones" del sistema en Accesibilidad.
+
+## v0.7.4 — Instalación sin re-descargar y con resultado visible ✅
 
 - Al actualizar, la app **instala el archivo que ya bajó**: si cancelas o
   concedes el permiso y vuelves a pulsar actualizar, no vuelve a descargar los
