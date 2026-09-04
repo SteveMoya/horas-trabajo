@@ -22,15 +22,12 @@ class WidgetMarcadorProvider : HomeWidgetProvider() {
       widgetData: SharedPreferences,
   ) {
     val enCurso = WidgetAcciones.hayJornadaActiva(widgetData)
-    val estado = WidgetAcciones.textoEstadoMarcador(widgetData)
 
     appWidgetIds.forEach { widgetId ->
       val views = RemoteViews(context.packageName, R.layout.home_widget_marcador)
 
-      views.setTextViewText(R.id.marcador_estado, estado)
-
       if (enCurso) {
-        views.setTextViewText(R.id.widget_boton_marcar, "Marcar salida")
+        views.setTextViewText(R.id.widget_boton_marcar, "Salida")
         views.setTextColor(R.id.widget_boton_marcar, Color.WHITE)
         views.setInt(
             R.id.widget_boton_marcar,
@@ -38,7 +35,7 @@ class WidgetMarcadorProvider : HomeWidgetProvider() {
             R.drawable.widget_btn_marcar_salida,
         )
       } else {
-        views.setTextViewText(R.id.widget_boton_marcar, "Marcar entrada")
+        views.setTextViewText(R.id.widget_boton_marcar, "Entrada")
         views.setTextColor(R.id.widget_boton_marcar, Color.rgb(0x15, 0x65, 0xC0))
         views.setInt(
             R.id.widget_boton_marcar,

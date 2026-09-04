@@ -1,6 +1,16 @@
-# Horas Trabajo RD — Beta v0.8.6
+# Horas Trabajo RD — Beta v0.8.7
 
-## Fix widget Marcador (no se actualizaba al marcar) 🔧
+## Widget Marcador: tamaño 1x1 y más simple 🔘
+
+- El widget Marcador es ahora **un único botón que ocupa todo el widget**:
+  blanco "Entrada" (sin jornada) o rojo "Salida" (en curso). Al ser un solo
+  botón, cabe en una celda **1x1** y se ve bien en cualquier tamaño (se
+  estira).
+- Mínimos reducidos (hasta una celda) y máxima ampliada (320dp).
+- Test de regresión añadido: el refresco del widget siempre alcanza los 3
+  providers, incluso si falla la lectura de la BD o la fecha.
+
+## v0.8.6 — Fix widget Marcador (no se actualizaba al marcar) 🔧
 
 - El botón de marcar ahora refresca el widget **siempre** tras marcar: se
   arregló un caso en el que un fallo al formatear la fecha en español o al

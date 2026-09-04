@@ -1,46 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Widget MARCAR: un botón grande de marcado que alterna entrada/salida
-     (Material 3). Se usa el mismo id widget_boton_marcar para que el provider
-     cambie su texto/color según el estado en curso. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Widget MARCAR (1x1): un ÚNICO botón que llena el widget y alterna
+     entrada/salida. Al ser un solo botón, cabe perfectamente en una celda de
+     1x1 y también se ve bien en tamaños grandes (el botón se estira).
+     El color/etiqueta del botón transmite el estado: blanco "Entrada" o
+     rojo "Salida". Se usa el mismo id widget_boton_marcar. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="14dp"
     android:background="@drawable/widget_background"
     android:id="@+id/marcador_container">
 
-    <TextView
-        android:id="@+id/marcador_titulo"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="HORAS TRABAJO"
-        android:textColor="#B3FFFFFF"
-        android:textSize="11sp"
-        android:textStyle="bold"
-        android:letterSpacing="0.08" />
-
-    <TextView
-        android:id="@+id/marcador_estado"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:gravity="center"
-        android:textColor="#FFFFFF"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:text="Fuera de la jornada" />
-
-    <!-- Botón grande (ocupa el resto del alto) que alterna entrada/salida y
-         dispara MarcadorWidgetActionReceiver. -->
     <Button
         android:id="@+id/widget_boton_marcar"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginTop="10dp"
+        android:layout_height="match_parent"
+        android:layout_margin="8dp"
         android:minWidth="0dp"
         android:minHeight="0dp"
         android:background="@drawable/widget_btn_marcar_entrada"
@@ -48,5 +22,6 @@
         android:textSize="12sp"
         android:textStyle="bold"
         android:textAllCaps="false"
-        android:text="Marcar entrada" />
-</LinearLayout>
+        android:gravity="center"
+        android:text="Entrada" />
+</FrameLayout>
