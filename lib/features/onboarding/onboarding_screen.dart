@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:horas_trabajo/core/illustrations/app_illustrations.dart';
 import 'package:horas_trabajo/core/navigation/fade_through_route.dart';
+import 'package:horas_trabajo/core/theme/app_motion.dart';
+import 'package:horas_trabajo/core/theme/app_spacing.dart';
 import 'package:horas_trabajo/core/theme/pixel_shapes.dart';
+import 'package:horas_trabajo/core/widgets/animated_illustration.dart';
 import 'package:horas_trabajo/core/widgets/animated_tap_scale.dart';
 import 'package:horas_trabajo/core/widgets/morphing_blob.dart';
 import 'package:horas_trabajo/core/widgets/staggered_fade_in.dart';
+import 'package:horas_trabajo/core/widgets/state_views.dart';
 import 'package:horas_trabajo/data/models/employee_profile.dart';
 import 'package:horas_trabajo/features/root/root_screen.dart';
 import 'package:horas_trabajo/state/app_state.dart';
 import 'package:provider/provider.dart';
 
 /// Bienvenida inicial: se muestra una única vez, la primera vez que se abre
-/// la app (ver [AppState.onboardingCompletado]). Presenta las funciones
-/// principales y recoge lo mínimo indispensable — nombre, salario y
-/// preferencia de GPS — para que el cálculo de nómina funcione desde la
-/// primera jornada marcada.
+/// la app (ver [AppState.onboardingCompletado]). Introduce la app en 4
+/// pasos breves (bienvenida, qué puedes hacer, características, apoyo),
+/// y recoge lo mínimo indispensable — nombre, salario y preferencia de
+/// GPS — para que el cálculo de nómina funcione desde la primera jornada.
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -23,10 +28,11 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  static const _totalPaginas = 7;
-  static const _indicePerfil = 4;
-  static const _indiceUbicacion = 5;
-  static const _indiceFinal = 6;
+  static const _totalPaginas = 9;
+  static const _indicePerfil = 5;
+  static const _indiceUbicacion = 6;
+  static const _indiceDonacion = 7;
+  static const _indiceFinal = 8;
 
   final _controller = PageController();
   final _nombre = TextEditingController();
@@ -74,10 +80,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _irA(int pagina) {
     HapticFeedback.selectionClick();
+    // Todo el onboarding comparte un único Scaffold: sin esto, un SnackBar
+    // mostrado en una página (p. ej. "Donar ahora" pendiente) queda
+    // flotando encima del botón de la página siguiente.
+    ScaffoldMessenger.maybeOf(context)?.clearSnackBars();
     return _controller.animateToPage(
       pagina,
-      duration: const Duration(milliseconds: 380),
-      curve: Curves.easeOutCubic,
+      duration: AppMotion.page,
+      curve: AppMotion.emphasized,
     );
   }
 
@@ -116,6 +126,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // "Saltar" solo tiene sentido durante la introducción (bienvenida,
+    // funciones, características): a partir del perfil, cada pantalla
+    // pide algo puntual y ya no es contenido introductorio para saltear.
     final esIntro = _pagina < _indicePerfil;
     return PopScope(
       canPop: _pagina == 0,
@@ -150,16 +163,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   controller: _controller,
                   onPageChanged: (i) => setState(() => _pagina = i),
                   children: [
+                    const _PaginaBienvenida(),
                     const _PaginaIntro(
-                      icono: null,
-                      titulo: 'Horas Trabajo RD',
-                      subtitulo:
-                          'Marca tu entrada y salida, y deja que la app '
-                          'calcule tu nómina exacta según las leyes '
-                          'laborales dominicanas.',
-                    ),
-                    const _PaginaIntro(
-                      icono: Icons.touch_app,
+                      illustration: AppIllustrationAsset.track,
+                      paso: 'Paso 1 de 3 · Marca',
                       titulo: 'Marca con un solo toque',
                       subtitulo:
                           'Registra tu entrada y salida al instante. Con '
@@ -167,7 +174,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           'manual si prefieres no compartir tu ubicación.',
                     ),
                     const _PaginaIntro(
-                      icono: Icons.calculate_outlined,
+                      illustration: AppIllustrationAsset.calculate,
+                      paso: 'Paso 2 de 3 · Calcula',
                       titulo: 'Tu pago, calculado al segundo',
                       subtitulo:
                           'Horas ordinarias, extras, nocturnas, feriados y '
@@ -175,18 +183,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           'según la Ley 16-92.',
                     ),
                     const _PaginaIntro(
-                      icono: Icons.dashboard_customize_outlined,
+                      illustration: AppIllustrationAsset.reports,
+                      paso: 'Paso 3 de 3 · Organiza',
                       titulo: 'Reportes, feriados y respaldo',
                       subtitulo:
                           'Reportes semanales y mensuales con gráficos, '
                           'exportación a PDF, y control de feriados RD, '
                           'vacaciones y permisos.',
                     ),
+                    const _PaginaCaracteristicas(),
                     _PaginaPerfil(nombre: _nombre, salario: _salario),
                     _PaginaUbicacion(
                       seleccionUsarGps: _usarUbicacion,
                       onCambiar: (v) => setState(() => _usarUbicacion = v),
                     ),
+                    const _PaginaDonacion(),
                     const _PaginaFinal(),
                   ],
                 ),
@@ -221,6 +232,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       case _indicePerfil:
       case _indiceUbicacion:
         return 'Continuar';
+      case _indiceDonacion:
+        return 'Continuar sin donar';
       case _indiceFinal:
         return _enviando ? 'Preparando…' : 'Empezar a trabajar';
       default:
@@ -247,8 +260,8 @@ class _PuntosProgreso extends StatelessWidget {
           children: [
             for (var i = 0; i < total; i++)
               AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOut,
+                duration: AppMotion.base,
+                curve: AppMotion.standard,
                 margin: const EdgeInsets.symmetric(horizontal: 3),
                 height: 8,
                 width: i == actual ? 24 : 8,
@@ -264,44 +277,95 @@ class _PuntosProgreso extends StatelessWidget {
   }
 }
 
+/// Página 1: presenta la app con su ilustración principal, nombre y una
+/// propuesta de valor breve — antes de entrar en el detalle de cada función.
+class _PaginaBienvenida extends StatelessWidget {
+  const _PaginaBienvenida();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    // SingleChildScrollView (no solo Padding+Column): la ilustración de
+    // bienvenida es la más grande del onboarding y en una pantalla chica
+    // u horizontal podría desbordar en vez de simplemente hacer scroll.
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxxl),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const AnimatedIllustration(
+            AppIllustrationAsset.welcome,
+            size: 220,
+            ambient: true,
+          ),
+          const SizedBox(height: 28),
+          StaggeredFadeIn(
+            index: 0,
+            child: Text(
+              'Horas Trabajo RD',
+              textAlign: TextAlign.center,
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineMedium
+                  ?.copyWith(fontWeight: FontWeight.w800),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          StaggeredFadeIn(
+            index: 1,
+            child: Text(
+              'Marca tu entrada y salida, y deja que la app calcule tu '
+              'nómina exacta según las leyes laborales dominicanas.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Páginas 2-4 ("¿Qué puedes hacer?" / "¿Cómo funciona?"): una ilustración
+/// animada por función real de la app, con una etiqueta de paso que deja
+/// claro el flujo Marca → Calcula → Organiza.
 class _PaginaIntro extends StatelessWidget {
   const _PaginaIntro({
-    required this.icono,
+    required this.illustration,
+    required this.paso,
     required this.titulo,
     required this.subtitulo,
   });
 
-  /// `null` en la primera página: usa el logo de la app en vez de un ícono.
-  final IconData? icono;
+  final AppIllustrationAsset illustration;
+  final String paso;
   final String titulo;
   final String subtitulo;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxxl),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          AnimatedIllustration(illustration, size: 160, semanticLabel: titulo),
+          const SizedBox(height: AppSpacing.lg),
           StaggeredFadeIn(
             index: 0,
-            child: MorphingBlob(
-              size: 130,
-              color: scheme.primaryContainer,
-              child: icono == null
-                  ? ClipOval(
-                      child: Image.asset(
-                        'assets/logo.png',
-                        height: 76,
-                        width: 76,
-                        fit: BoxFit.cover,
-                      ),
-                    )
-                  : Icon(icono, size: 56, color: scheme.onPrimaryContainer),
+            child: Text(
+              paso.toUpperCase(),
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: scheme.primary,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.1,
+                  ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: AppSpacing.sm),
           StaggeredFadeIn(
             index: 1,
             child: Text(
@@ -313,7 +377,7 @@ class _PaginaIntro extends StatelessWidget {
                   ?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           StaggeredFadeIn(
             index: 2,
             child: Text(
@@ -326,6 +390,118 @@ class _PaginaIntro extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Página 5 ("Características principales"): resume en una grilla las
+/// funciones que no entraron en el flujo de 3 pasos, cada una con su
+/// propio icono y aparición escalonada.
+class _PaginaCaracteristicas extends StatelessWidget {
+  const _PaginaCaracteristicas();
+
+  static const _items = [
+    (
+      icono: Icons.location_on_outlined,
+      titulo: 'Geocerca inteligente',
+      texto: 'Guarda tu lugar de trabajo y recibe avisos al llegar o salir.',
+    ),
+    (
+      icono: Icons.calculate_outlined,
+      titulo: 'Cálculo RD certero',
+      texto: 'Ordinarias, extras, nocturnas y feriados según la Ley 16-92.',
+    ),
+    (
+      icono: Icons.picture_as_pdf_outlined,
+      titulo: 'Reportes y PDF',
+      texto: 'Exporta tu nómina semanal o mensual en PDF o CSV.',
+    ),
+    (
+      icono: Icons.lock_outline,
+      titulo: '100% local y privado',
+      texto: 'Sin cuentas ni nube: tus datos quedan en tu teléfono.',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          StaggeredFadeIn(
+            index: 0,
+            child: Text(
+              'Todo lo que necesitas',
+              textAlign: TextAlign.center,
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          for (var i = 0; i < _items.length; i++)
+            StaggeredFadeIn(
+              index: i + 1,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: _Caracteristica(
+                  icono: _items[i].icono,
+                  titulo: _items[i].titulo,
+                  texto: _items[i].texto,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Caracteristica extends StatelessWidget {
+  const _Caracteristica({
+    required this.icono,
+    required this.titulo,
+    required this.texto,
+  });
+
+  final IconData icono;
+  final String titulo;
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: scheme.primaryContainer,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icono, color: scheme.onPrimaryContainer),
+        ),
+        const SizedBox(width: AppSpacing.lg),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(titulo, style: const TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 2),
+              Text(
+                texto,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -567,33 +743,41 @@ class _TarjetaOpcion extends StatelessWidget {
   }
 }
 
-class _PaginaFinal extends StatelessWidget {
-  const _PaginaFinal();
+/// Página 8 ("Apoya este proyecto"): explica de forma breve y humana cómo
+/// las donaciones ayudan al mantenimiento de la app. El pago todavía no
+/// está conectado — "Donar ahora" lo avisa en vez de simular un cobro — y
+/// "Continuar sin donar" (el botón inferior normal) nunca hace sentir mal
+/// a quien no dona.
+class _PaginaDonacion extends StatelessWidget {
+  const _PaginaDonacion();
+
+  void _avisarPendiente(BuildContext context) {
+    HapticFeedback.selectionClick();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Muy pronto vas a poder apoyar el proyecto desde acá 💛'),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxxl),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          const AnimatedIllustration(
+            AppIllustrationAsset.support,
+            size: 150,
+            ambient: true,
+          ),
+          const SizedBox(height: AppSpacing.xxl),
           StaggeredFadeIn(
             index: 0,
-            child: MorphingBlob(
-              size: 130,
-              color: scheme.tertiaryContainer,
-              blobA: PixelBlobs.suave,
-              blobB: PixelBlobs.marcada,
-              duracion: const Duration(seconds: 3),
-              child: Icon(Icons.check_circle, size: 64, color: scheme.onTertiaryContainer),
-            ),
-          ),
-          const SizedBox(height: 32),
-          StaggeredFadeIn(
-            index: 1,
             child: Text(
-              '¡Todo listo!',
+              'Apoya este proyecto',
               textAlign: TextAlign.center,
               style: Theme.of(context)
                   .textTheme
@@ -601,14 +785,37 @@ class _PaginaFinal extends StatelessWidget {
                   ?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           StaggeredFadeIn(
-            index: 2,
+            index: 1,
             child: Text(
-              'Ya puedes empezar a marcar tu jornada. Bienvenido a '
-              'Horas Trabajo RD.',
+              'Horas Trabajo RD es gratis y 100% local — sin publicidad ni '
+              'venta de datos. Si te sirve, tu aporte ayuda a sostener el '
+              'tiempo de mantenimiento y las próximas mejoras.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxl),
+          StaggeredFadeIn(
+            index: 2,
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _avisarPendiente(context),
+                icon: const Icon(Icons.favorite_outline),
+                label: const Text('Donar ahora'),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          StaggeredFadeIn(
+            index: 3,
+            child: Text(
+              'Próximamente',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
             ),
@@ -617,4 +824,16 @@ class _PaginaFinal extends StatelessWidget {
       ),
     );
   }
+}
+
+class _PaginaFinal extends StatelessWidget {
+  const _PaginaFinal();
+
+  @override
+  Widget build(BuildContext context) => const SuccessState(
+        titulo: '¡Todo listo!',
+        mensaje:
+            'Ya puedes empezar a marcar tu jornada. Bienvenido a Horas '
+            'Trabajo RD.',
+      );
 }
