@@ -1,6 +1,12 @@
-# Horas Trabajo RD — Beta v0.8.3
+# Horas Trabajo RD — Beta v0.8.4
 
-## Corrección: "error desconocido" al instalar una actualización 🛠️
+## Onboarding centrado en pantalla 🎯
+
+- El contenido de las páginas de bienvenida ahora queda **centrado
+  verticalmente** en el área central, en vez de pegado arriba con un hueco
+  abajo. Sigue scrolleando si el contenido es más alto que la pantalla.
+
+## v0.8.3 — Corrección: "error desconocido" al instalar una actualización 🛠️
 
 - **Bug arreglado**: en varios fabricantes, la instalación se completaba
   bien pero la app la reportaba como "error desconocido" porque el

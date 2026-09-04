@@ -277,6 +277,40 @@ class _PuntosProgreso extends StatelessWidget {
   }
 }
 
+/// Centra el contenido verticalmente en el viewport, pero sigue scrolleando
+/// si el contenido es más alto que la pantalla. Necesario porque un
+/// `SingleChildScrollView` directo rompe `mainAxisAlignment.center` (la Column
+/// toma su altura natural y quedaría todo pegado arriba).
+class _CentradaScroll extends StatelessWidget {
+  const _CentradaScroll({required this.child, this.horizontal = 28});
+
+  final Widget child;
+  final double horizontal;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: EdgeInsets.symmetric(
+            horizontal: horizontal,
+            vertical: 24,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: (constraints.maxHeight - 48)
+                  .clamp(0.0, double.infinity),
+            ),
+            child: IntrinsicHeight(
+              child: child,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 /// Página 1: presenta la app con su ilustración principal, nombre y una
 /// propuesta de valor breve — antes de entrar en el detalle de cada función.
 class _PaginaBienvenida extends StatelessWidget {
@@ -288,8 +322,8 @@ class _PaginaBienvenida extends StatelessWidget {
     // SingleChildScrollView (no solo Padding+Column): la ilustración de
     // bienvenida es la más grande del onboarding y en una pantalla chica
     // u horizontal podría desbordar en vez de simplemente hacer scroll.
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxxl),
+    return _CentradaScroll(
+      horizontal: AppSpacing.xxxl,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -347,8 +381,8 @@ class _PaginaIntro extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxxl),
+    return _CentradaScroll(
+      horizontal: AppSpacing.xxxl,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -425,8 +459,8 @@ class _PaginaCaracteristicas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
+    return _CentradaScroll(
+      horizontal: 28,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -515,8 +549,8 @@ class _PaginaPerfil extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+    return _CentradaScroll(
+      horizontal: 32,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -598,8 +632,8 @@ class _PaginaUbicacion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+    return _CentradaScroll(
+      horizontal: 32,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -763,8 +797,8 @@ class _PaginaDonacion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxxl),
+    return _CentradaScroll(
+      horizontal: AppSpacing.xxxl,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
