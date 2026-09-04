@@ -60,11 +60,15 @@ class MainActivity : FlutterActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_INSTALAR && resultadoInstalacionPendiente != null) {
-            val res = when (resultCode) {
-                RESULT_OK -> "instalado"
-                RESULT_CANCELED -> "cancelado"
-                else -> "error:resultadoDesconocido"
-            }
+            // El PackageInstaller lanzado por ACTION_VIEW es conocido por
+            // devolver códigos de resultado no estándar en muchos
+            // fabricantes incluso cuando la instalación fue exitosa —
+            // tratarlo como error dejaba "error desconocido" en
+            // instalaciones que sí funcionaron. Un fallo real (APK
+            // corrupto, firma distinta) lo muestra el propio instalador y
+            // vuelve como RESULT_CANCELED, así que es el único código que
+            // se trata como "no se instaló".
+            val res = if (resultCode == RESULT_CANCELED) "cancelado" else "instalado"
             resultadoInstalacionPendiente?.success(res)
             resultadoInstalacionPendiente = null
         }
