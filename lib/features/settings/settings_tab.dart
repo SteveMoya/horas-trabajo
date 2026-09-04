@@ -7,8 +7,10 @@ import 'package:horas_trabajo/data/models/employee_profile.dart';
 import 'package:horas_trabajo/data/models/rd_pay_rules.dart';
 import 'package:horas_trabajo/features/backup/backup_screen.dart';
 import 'package:horas_trabajo/features/calendario/calendario_screen.dart';
+import 'package:horas_trabajo/features/updates/update_controller.dart';
 import 'package:horas_trabajo/services/reminder_service.dart';
 import 'package:horas_trabajo/state/app_state.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
 class SettingsTab extends StatefulWidget {
@@ -24,6 +26,16 @@ class _SettingsTabState extends State<SettingsTab> {
   RdPayRules _reglas = const RdPayRules();
   bool _usarUbicacion = true;
   bool _recordatorios = false;
+  PackageInfo? _packageInfo;
+  bool _buscandoActualizacion = false;
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((pi) {
+      if (mounted) setState(() => _packageInfo = pi);
+    });
+  }
 
   @override
   void didChangeDependencies() {
@@ -118,9 +130,59 @@ class _SettingsTabState extends State<SettingsTab> {
             ),
           ),
           const SizedBox(height: 24),
+          const _SeccionTitulo('Actualizaciones'),
+          Card(
+            child: Column(
+              children: [
+                ListTile(
+                  leading: _buscandoActualizacion
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2.5),
+                        )
+                      : const Icon(Icons.system_update_alt),
+                  title: const Text('Buscar actualización'),
+                  subtitle: Text(
+                    _buscandoActualizacion
+                        ? 'Buscando…'
+                        : 'Revisa si hay una versión nueva en GitHub',
+                  ),
+                  onTap: _buscandoActualizacion ? null : _buscarActualizaciones,
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.info_outline),
+                  title: const Text('Versión de la app'),
+                  subtitle: Text(
+                    _packageInfo == null
+                        ? 'Cargando…'
+                        : '${_packageInfo!.version} (build ${_packageInfo!.buildNumber})',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
         ],
       ),
     );
+  }
+
+  Future<void> _buscarActualizaciones() async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _buscandoActualizacion = true);
+    // fromNotificacion:true salta el throttle de 3 min y, si hay una
+    // versión nueva, abre el diálogo aunque ya se hubiera avisado antes
+    // — acá el usuario lo pidió explícitamente, no es un chequeo pasivo.
+    final info = await UpdateController.instance.verificar(fromNotificacion: true);
+    if (!mounted) return;
+    setState(() => _buscandoActualizacion = false);
+    if (info == null) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Ya tienes la última versión instalada ✅')),
+      );
+    }
   }
 
   Future<void> _guardarPerfil(AppState app) async {
