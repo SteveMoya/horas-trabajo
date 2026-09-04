@@ -65,12 +65,25 @@ Future<void> homeWidgetInteractivityCallback(Uri? uri) async {
 /// Se llama tanto desde el callback headless de arriba como desde AppState
 /// al marcar/editar/eliminar sesiones, para que los widgets nunca queden
 /// desactualizados sin importar desde dónde se hizo el cambio.
+///
+/// IMPORTANTE: es a prueba de fallas — lee de la base primero, y aún si
+/// cualquier parte falla (locale de fecha, un guardado, una BD), los
+/// providers se actualizan igualmente con lo último que se pudo leer. Así un
+/// fallo parcial nunca deja el widget "estático" sin reflejar el marcado.
 Future<void> actualizarHomeWidget() async {
+  // Valores por defecto: si la BD falla, al menos se publican estos.
+  var enCurso = false;
+  var estado = 'Fuera de la jornada';
+  var inicioMillis = '';
+  var hoyHoras = '0.00 h';
+  var semanaHoras = '0.00 h';
+  var fecha = '';
+
   try {
     // Este isolate headless nunca pasa por main.dart, así que Fmt.horaCorta
     // (DateFormat con locale 'es') lanza LocaleDataException si no se
-    // inicializan los datos de localización primero. Llamarlo de nuevo
-    // desde la app principal (donde ya está inicializado) es inofensivo.
+    // inicializan los datos de localización. Llamarlo de nuevo desde la app
+    // principal (donde ya está inicializado) es inofensivo.
     try {
       await initializeDateFormatting('es');
     } catch (_) {/* datos de localidad no disponibles */}
@@ -83,38 +96,49 @@ Future<void> actualizarHomeWidget() async {
     final inicioHoy = DateTime(ahora.year, ahora.month, ahora.day);
     final inicioSemana = inicioHoy.subtract(Duration(days: ahora.weekday - 1));
 
-    final enCurso = activa != null;
-    final estado = enCurso
+    enCurso = activa != null;
+    estado = enCurso
         ? 'En curso desde ${Fmt.horaCorta(activa.inicio)}'
         : 'Fuera de la jornada';
-
-    await HomeWidget.saveWidgetData<String>('en_curso', enCurso ? '1' : '0');
-    await HomeWidget.saveWidgetData<String>('estado', estado);
-    // El widget nativo arma su propio Chronometer/estado con esta hora de
+    // El widget nativo arma su propio estado/cronómetro con esta hora de
     // inicio (ver WidgetAcciones.kt) — vacío significa "sin jornada activa".
-    await HomeWidget.saveWidgetData<String>(
-      'inicio_millis',
-      enCurso ? activa.inicio.millisecondsSinceEpoch.toString() : '',
-    );
-    await HomeWidget.saveWidgetData<String>(
-      'hoy_horas',
-      Fmt.horas(_horasDesde(sesiones, inicioHoy, ahora)),
-    );
-    await HomeWidget.saveWidgetData<String>(
-      'semana_horas',
-      Fmt.horas(_horasDesde(sesiones, inicioSemana, ahora)),
-    );
-    // Fecha en español para el widget reloj.
-    await HomeWidget.saveWidgetData<String>(
-      'fecha',
-      DateFormat('EEEE d \'de\' MMMM', 'es').format(ahora),
-    );
-
-    for (final provider in _kProviders) {
-      await HomeWidget.updateWidget(androidName: provider);
-    }
+    inicioMillis = enCurso ? activa.inicio.millisecondsSinceEpoch.toString() : '';
+    hoyHoras = Fmt.horas(_horasDesde(sesiones, inicioHoy, ahora));
+    semanaHoras = Fmt.horas(_horasDesde(sesiones, inicioSemana, ahora));
+    try {
+      // Fecha en español para el widget reloj. Se aísla por si el locale
+      // 'es' no está disponible en el isolate: no debe bloquear el refresco.
+      fecha = DateFormat('EEEE d \'de\' MMMM', 'es').format(ahora);
+    } catch (_) {/* fecha opcional; el widget usa el estado igual */}
   } catch (e) {
-    debugPrint('actualizarHomeWidget falló: $e');
+    debugPrint('actualizarHomeWidget · lectura falló: $e');
+  }
+
+  // Guardado de datos — cada clave de forma aislada.
+  final datos = <String, String>{
+    'en_curso': enCurso ? '1' : '0',
+    'estado': estado,
+    'inicio_millis': inicioMillis,
+    'hoy_horas': hoyHoras,
+    'semana_horas': semanaHoras,
+    if (fecha.isNotEmpty) 'fecha': fecha,
+  };
+  for (final entry in datos.entries) {
+    try {
+      await HomeWidget.saveWidgetData<String>(entry.key, entry.value);
+    } catch (e) {
+      debugPrint('actualizarHomeWidget · guardar ${entry.key} falló: $e');
+    }
+  }
+
+  // Actualización de los 3 providers — SIEMPRE se intenta, de forma
+  // independiente, aunque algún guardado anterior haya fallado.
+  for (final provider in _kProviders) {
+    try {
+      await HomeWidget.updateWidget(androidName: provider);
+    } catch (e) {
+      debugPrint('actualizarHomeWidget · update $provider falló: $e');
+    }
   }
 }
 

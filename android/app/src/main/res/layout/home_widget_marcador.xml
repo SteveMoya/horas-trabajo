@@ -45,8 +45,8 @@
         android:minHeight="0dp"
         android:background="@drawable/widget_btn_marcar_entrada"
         android:textColor="#1565C0"
-        android:textSize="17sp"
+        android:textSize="12sp"
         android:textStyle="bold"
-        android:letterSpacing="0.02"
-        android:text="▶  MARCAR ENTRADA" />
+        android:textAllCaps="false"
+        android:text="Marcar entrada" />
 </LinearLayout>

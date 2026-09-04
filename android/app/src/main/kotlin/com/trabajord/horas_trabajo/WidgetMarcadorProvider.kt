@@ -30,7 +30,7 @@ class WidgetMarcadorProvider : HomeWidgetProvider() {
       views.setTextViewText(R.id.marcador_estado, estado)
 
       if (enCurso) {
-        views.setTextViewText(R.id.widget_boton_marcar, "■  MARCAR SALIDA")
+        views.setTextViewText(R.id.widget_boton_marcar, "Marcar salida")
         views.setTextColor(R.id.widget_boton_marcar, Color.WHITE)
         views.setInt(
             R.id.widget_boton_marcar,
@@ -38,7 +38,7 @@ class WidgetMarcadorProvider : HomeWidgetProvider() {
             R.drawable.widget_btn_marcar_salida,
         )
       } else {
-        views.setTextViewText(R.id.widget_boton_marcar, "▶  MARCAR ENTRADA")
+        views.setTextViewText(R.id.widget_boton_marcar, "Marcar entrada")
         views.setTextColor(R.id.widget_boton_marcar, Color.rgb(0x15, 0x65, 0xC0))
         views.setInt(
             R.id.widget_boton_marcar,

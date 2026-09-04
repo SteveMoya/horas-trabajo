@@ -1,6 +1,17 @@
-# Horas Trabajo RD — Beta v0.8.5
+# Horas Trabajo RD — Beta v0.8.6
 
-## 3 widgets de pantalla de inicio nuevos (Material 3) 🧩
+## Fix widget Marcador (no se actualizaba al marcar) 🔧
+
+- El botón de marcar ahora refresca el widget **siempre** tras marcar: se
+  arregló un caso en el que un fallo al formatear la fecha en español o al
+  guardar un dato **abortaba el refresco entero** y el widget se quedaba
+  congelado ("Marcar entrada") aunque el marcado sí se registrara.
+- Refresco de los 3 widgets a prueba de fallas: cada dato y cada actualización
+  se intenta de forma independiente.
+- **Texto del botón más pequeño** (12sp) y sin flechas, para que no desborde
+  en el widget de tamaño chico.
+
+## v0.8.5 — 3 widgets de pantalla de inicio nuevos (Material 3) 🧩
 
 Reemplazan al widget único anterior por **3 variantes independientes** que se
 añaden cada una desde el menú de widgets, con el estilo de la app (marca azul,
