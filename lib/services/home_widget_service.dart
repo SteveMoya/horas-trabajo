@@ -44,10 +44,11 @@ Future<void> homeWidgetInteractivityCallback(Uri? uri) async {
   }
 }
 
-/// Refresca el texto del widget con el estado actual. Se llama tanto desde
-/// el callback headless de arriba como desde AppState al marcar entrada/
-/// salida dentro de la propia app, para que el widget nunca quede
-/// desactualizado sin importar desde dónde se marcó.
+/// Refresca el widget de pantalla de inicio con el estado actual, y con
+/// las horas de hoy y de la semana para su variante grande. Se llama
+/// tanto desde el callback headless de arriba como desde AppState al
+/// marcar entrada/salida dentro de la propia app, para que el widget
+/// nunca quede desactualizado sin importar desde dónde se marcó.
 Future<void> actualizarHomeWidget() async {
   try {
     // Este isolate headless nunca pasa por main.dart, así que Fmt.horaCorta
@@ -58,15 +59,47 @@ Future<void> actualizarHomeWidget() async {
       await initializeDateFormatting('es');
     } catch (_) {/* datos de localidad no disponibles */}
 
-    final activa = await WorkSessionRepository().obtenerEnProgreso();
+    final repo = WorkSessionRepository();
+    final activa = await repo.obtenerEnProgreso();
+    final sesiones = await repo.obtenerTodas();
+
+    final ahora = DateTime.now();
+    final inicioHoy = DateTime(ahora.year, ahora.month, ahora.day);
+    final inicioSemana = inicioHoy.subtract(Duration(days: ahora.weekday - 1));
+
     await HomeWidget.saveWidgetData<String>(
       'estado',
       activa == null
           ? 'Fuera de la jornada'
           : 'En curso desde ${Fmt.horaCorta(activa.inicio)}',
     );
+    // El widget nativo arma su propio Chronometer con esta hora de inicio
+    // (ver MarcadorWidgetProvider.kt) — vacío significa "sin jornada activa".
+    await HomeWidget.saveWidgetData<String>(
+      'inicio_millis',
+      activa == null ? '' : activa.inicio.millisecondsSinceEpoch.toString(),
+    );
+    await HomeWidget.saveWidgetData<String>(
+      'hoy_horas',
+      Fmt.horas(_horasDesde(sesiones, inicioHoy, ahora)),
+    );
+    await HomeWidget.saveWidgetData<String>(
+      'semana_horas',
+      Fmt.horas(_horasDesde(sesiones, inicioSemana, ahora)),
+    );
     await HomeWidget.updateWidget(androidName: _kProviderName);
   } catch (e) {
     debugPrint('actualizarHomeWidget falló: $e');
   }
+}
+
+/// Suma las horas trabajadas en sesiones que empezaron en o después de
+/// [desde] — la sesión en curso (sin `fin`) cuenta hasta [ahora].
+double _horasDesde(List<WorkSession> sesiones, DateTime desde, DateTime ahora) {
+  var total = 0.0;
+  for (final s in sesiones) {
+    if (s.inicio.isBefore(desde)) continue;
+    total += (s.fin ?? ahora).difference(s.inicio).inMinutes / 60.0;
+  }
+  return total;
 }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Chip para el cronómetro / reporte rápido: superficie ligeramente
+     elevada sobre el fondo del widget, como un surfaceContainer de M3. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#1AFFFFFF" />
+    <corners android:radius="16dp" />
+</shape>
